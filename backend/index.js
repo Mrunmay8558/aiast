@@ -3,6 +3,16 @@ import cors from "cors";
 import fetchImageRoute from "./routes/fetchimage.route.js";
 import dotenv from "dotenv";
 import aivoicebotRoute from "./routes/aiassistantvoicebot.route.js";
+import mongoose from "mongoose";
+
+// mongoose
+//   .connect()
+//   .then((res) => {
+//     console.log("DataBase Connected");
+//   })
+//   .catch((err) => {
+//     console.log(err);
+//   });
 
 dotenv.config();
 const app = express();

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import "./App.css";
 import UploadImg from "./components/uploadImg";
 import Form from "./components/form";
@@ -57,6 +57,12 @@ function App() {
     pincode: "",
     mobile_number: "",
   });
+
+  useEffect(() => {
+    if (step === 1) {
+      setSubmit(true);
+    }
+  }, []);
 
   const addChat = (message) => {
     if (message === null) return;

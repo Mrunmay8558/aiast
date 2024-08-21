@@ -53,6 +53,9 @@ export const fetchImageController = async (req, res, next) => {
           ],
         },
       ],
+      response_format: {
+        type: "json_object",
+      },
     });
 
     if (completion) {

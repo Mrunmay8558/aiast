@@ -29,7 +29,7 @@ export const voicebotController = async (req, res, next) => {
           role: "user",
           content:
             step === 1
-              ? transcribedText.message
+              ? "Hii"
               : step === 2
               ? JSON.stringify(transcribedText.formdata)
               : "hello",

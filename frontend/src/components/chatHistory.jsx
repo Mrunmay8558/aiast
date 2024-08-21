@@ -33,18 +33,10 @@ const botInputStyle = {
 };
 
 const ChatHistory = ({ chats }) => {
-  const [autoplay, setAutoplay] = useState(true);
-
-  useEffect(() => {
-    if (chats.length > 0) {
-      setAutoplay(true);
-    }
-  }, [chats]);
-
   return (
     <div style={chatStyles}>
       {chats.map((chat, index) => (
-        <>
+        <React.Fragment key={index}>
           {chat.sender === "user" ? (
             <div style={userInputStyle}>
               <span
@@ -69,10 +61,10 @@ const ChatHistory = ({ chats }) => {
               >
                 {chat.message}
               </span>
-              <audio src={chat.url} autoPlay={autoplay} controls />
+              <audio src={chat.url} autoPlay={true} controls />
             </div>
           )}
-        </>
+        </React.Fragment>
       ))}
     </div>
   );

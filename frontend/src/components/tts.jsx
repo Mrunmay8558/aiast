@@ -30,8 +30,9 @@ const TTS = ({
       );
 
       const res = JSON.parse(response?.data);
-
-      setStep(res?.step + 1);
+      if (res?.isFilled && res?.isFilled === true) {
+        setStep(res?.step + 1);
+      }
       const audioBlob = base64ToBlob(res?.data, "audio/wav");
       const audioUrl = URL.createObjectURL(audioBlob);
       addURL(audioUrl, res?.ttsData);

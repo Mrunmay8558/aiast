@@ -3,7 +3,7 @@ import axios from "axios";
 
 const BaseURL = "http://localhost:8000/";
 
-const UploadImg = ({ setFormData }) => {
+const UploadImg = ({ setFormData, setStep }) => {
   const [selectedImage, setSelectedImage] = useState(null);
 
   const handleImageUpload = async () => {
@@ -18,6 +18,7 @@ const UploadImg = ({ setFormData }) => {
           });
           if (response.data) {
             setFormData(response.data);
+            setStep(2);
           }
         };
       } catch (error) {

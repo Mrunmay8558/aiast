@@ -98,7 +98,7 @@ function App() {
           submit={submit}
           setSubmit={setSubmit}
         />
-        <UploadImg setFormData={setFormData} />
+        <UploadImg setFormData={setFormData} setStep={setStep} />
       </div>
       <div style={formContainerStyle}>
         <Form

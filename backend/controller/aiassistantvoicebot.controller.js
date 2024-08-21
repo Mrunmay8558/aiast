@@ -18,9 +18,9 @@ const deepgram = createClient(process.env.DEEPGRAM_API);
 export const voicebotController = async (req, res, next) => {
   try {
     const { transcribedText, step } = req.body;
-    if (!transcribedText) {
-      return res.status(400).json({ error: "Text is required" });
-    }
+    // if (!transcribedText) {
+    //   return res.status(400).json({ error: "Text is required" });
+    // }
 
     // Generate the assistant's response
     const completion = await groq.chat.completions.create({
@@ -69,7 +69,7 @@ export const voicebotController = async (req, res, next) => {
               step === 2
                 ? JSON.stringify(transcribedText.formdata)
                 : transcribedText.message
-            }. Confirm whether all required fields have been filled out.'
+            }. Confirm whether all required fields have been filled out and inCase the Required fields are not filled, ask the user to fill the required fields else ask the user to submit the form, and give their consent and return isFilled as true or false based on the user's response.'
         
             Step 3: 'Now, provide your Work Details, such as your company name. Verifying your work details. After verifying, ask the user to submit the form and give their consent.'
         

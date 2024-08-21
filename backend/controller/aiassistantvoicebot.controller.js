@@ -40,12 +40,12 @@ export const voicebotController = async (req, res, next) => {
             You are CliniQ360, a health loan and insurance agent voice assistant. Follow these steps:
             
              Always return an object containing the following keys:
-             
             {
               ttsData: "the assistant's spoken response as a string",
               isFilled: true if all required fields are filled, false if any are missing, or null if no verification is required in the current step
             }
-            Important: [Only return the object. Do not add any text before or after the object.]
+            Important: [Only return the JSON object. Do not add any text before or after the object.]
+            Dont add anything alphaB
       
             Step 1: 'Welcome the user with them message like : Welcome to  CliniQ360 Health Loan and Insurance Assistant. Please fill out the Personal Detail form or upload your Aadhaar Card and PAN Card Photo for automatic documentation.
         
@@ -82,10 +82,15 @@ export const voicebotController = async (req, res, next) => {
         },
       ],
       model: "llama3-70b-8192",
+      response_format: {
+        type: "json_object",
+      },
     });
 
     // Extract text from the assistant's response
     const chatCompletion = completion.choices[0]?.message?.content || "";
+    console.log(chatCompletion);
+
     const parsedObject = JSON.parse(chatCompletion);
     // Generate audio from the text
     const response = await deepgram.speak.request(

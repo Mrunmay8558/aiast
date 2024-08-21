@@ -30,7 +30,7 @@ export const voicebotController = async (req, res, next) => {
           content:
             step === 1
               ? transcribedText.message
-              : step === 3
+              : step === 2
               ? JSON.stringify(transcribedText.formdata)
               : "hello",
         },
@@ -38,10 +38,18 @@ export const voicebotController = async (req, res, next) => {
           role: "system",
           content: `
             You are CliniQ360, a health loan and insurance agent voice assistant. Follow these steps:
-    
-            Step 1: 'Welcome to CliniQ360 Health Loan and Insurance Assistant section. and ask to fill the form or upload addhar Card and Pan Card Photo for automatic Documentation'
-    
-            Step 2: 'Please fill out your Personal Health Details. Here is the JSON format for the data we need:'
+            
+             Always return an object containing the following keys:
+             
+            {
+              ttsData: "the assistant's spoken response as a string",
+              isFilled: true if all required fields are filled, false if any are missing, or null if no verification is required in the current step
+            }
+            Important: [Only return the object. Do not add any text before or after the object.]
+      
+            Step 1: 'Welcome the user with them message like : Welcome to  CliniQ360 Health Loan and Insurance Assistant. Please fill out the Personal Detail form or upload your Aadhaar Card and PAN Card Photo for automatic documentation.
+        
+            Step 2: 'Verifying your data. Here are the required fields:'
             {
               "name": "",
               "age": "",
@@ -57,54 +65,31 @@ export const voicebotController = async (req, res, next) => {
               "pincode": "",
               "mobile_number": ""
             }
-    
-            Step 3: 'Let me verify if you have filled all required fields. Here are the required fields:'
-            {
-              "name": "",
-              "age": "",
-              "dob": "",
-              "aadhaar_number": "",
-              "address": {
-                "street": "",
-                "locality": "",
-                "city": "",
-                "state": "",
-                "country": ""
-              },
-              "pincode": "",
-              "mobile_number": ""
-            }
-            Here is the data provided by the user: ${
-              step === 3
+            The user provided the following data: ${
+              step === 2
                 ? JSON.stringify(transcribedText.formdata)
                 : transcribedText.message
-            }. Please provide feedback on whether all required fields have been filled out.
-    
-            Step 4: 'Now, provide your Work Details, such as your company name.'
-    
-            Step 5: 'Verifying your work details.'
-    
-            Step 6: 'Tell me to submit the form and give your consent.'
-    
-            Step 7: 'Thank you for filling out the form.'
-    
-            Behave like a professional voice assistant, guiding users step-by-step. After the first interaction, keep the conversation limited to 1-2 lines only. in the end 
+            }. Confirm whether all required fields have been filled out.'
+        
+            Step 3: 'Now, provide your Work Details, such as your company name. Verifying your work details. After verifying, ask the user to submit the form and give their consent.'
+        
+            Step 4: 'Thank you for filling out the form.'
           `,
         },
         {
           role: "assistant",
-          content: `This is my step: ${step}`,
+          content: `This is step: ${step}. If user provides step 1, then welcome the user; if step 2, check the fields. Don't add anything in front of the object.`,
         },
       ],
-      model: "llama3-8b-8192",
+      model: "llama3-70b-8192",
     });
 
     // Extract text from the assistant's response
     const chatCompletion = completion.choices[0]?.message?.content || "";
-
+    const parsedObject = JSON.parse(chatCompletion);
     // Generate audio from the text
     const response = await deepgram.speak.request(
-      { text: chatCompletion },
+      { text: parsedObject?.ttsData },
       {
         model: "aura-asteria-en",
         encoding: "linear16",
@@ -120,7 +105,12 @@ export const voicebotController = async (req, res, next) => {
       }
       const buffer = Buffer.concat(chunks);
       const base64Audio = buffer.toString("base64");
-      res.json({ success: true, data: base64Audio });
+      res.json({
+        success: true,
+        data: base64Audio,
+        step: step,
+        ttsData: parsedObject?.ttsData,
+      });
     } else {
       res.status(500).json({ success: false, error: "Error generating audio" });
     }

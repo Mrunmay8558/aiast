@@ -110,6 +110,7 @@ export const voicebotController = async (req, res, next) => {
         data: base64Audio,
         step: step,
         ttsData: parsedObject?.ttsData,
+        isFilled: parsedObject?.isFilled,
       });
     } else {
       res.status(500).json({ success: false, error: "Error generating audio" });

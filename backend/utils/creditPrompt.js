@@ -37,8 +37,30 @@ export const prompt2 = `
   The output should reflect the user's input as accurately as possible, filling in the details where provided. If any fields are missing from the user's input, they should remain empty.
   `;
 
-// The user provided the following data: ${
-//     step === 2
-//       ? JSON.stringify(transcribedText.formdata)
-//       : transcribedText.message
-//   }. Confirm whether all required fields have been filled out and inCase the Required fields are not filled, ask the user to fill the required fields else ask the user to submit the form, and give their consent and return isFilled as true or false based on the user's response.'
+export const prompt3 = `
+  Based on the user's form data, confirm whether all required fields have been filled out. If any required fields are missing, prompt the user to provide the missing information. Once all fields are complete, ask the user to confirm their information by responding with "yes" or "no" for verification.
+  
+  If the user responds with "yes," set "isVerify" to true. If the user responds with "no," set "isVerify" to false.
+  
+  Respond in JSON format with the following details:
+  {
+    "ttsData": "The assistant's spoken response as a string.",
+    "isFilled": true, // true if all required fields are filled based on the user's input, false if any required fields are missing, or null if no verification is required in the current step
+    "formData": {     // Return the form data, including both previously filled data and any new data provided by the user
+      "name": "",             // User's full name
+      "age": "",              // User's age
+      "dob": "",              // User's date of birth (YYYY-MM-DD)
+      "aadhaar_number": "",   // User's Aadhaar number (if provided)
+      "address": {
+        "street": "",         // Street name or number
+        "locality": "",       // Locality or neighborhood
+        "city": "",           // City
+        "state": "",          // State
+        "country": ""         // Country
+      },
+      "pincode": "",          // Pincode or postal code
+      "mobile_number": ""     // User's mobile number
+    },
+    "isVerify": true or false // true if the user confirms the information, false if the user does not confirm
+  }
+  `;

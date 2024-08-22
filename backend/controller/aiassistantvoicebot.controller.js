@@ -3,7 +3,7 @@ import { AssemblyAI } from "assemblyai";
 import axios from "axios";
 import dotenv from "dotenv";
 import { createClient } from "@deepgram/sdk";
-import { prompt1, prompt2 } from "../utils/creditPrompt.js";
+import { prompt1, prompt2, prompt3 } from "../utils/creditPrompt.js";
 dotenv.config();
 
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
@@ -25,7 +25,8 @@ export const voicebotController = async (req, res, next) => {
               ? transcribedText?.message +
                 JSON.stringify(transcribedText?.formdata)
               : step === 3
-              ? transcribedText.formdata
+              ? JSON.stringify(transcribedText.formdata) +
+                transcribedText.message
               : "hey",
         },
         {
@@ -33,7 +34,15 @@ export const voicebotController = async (req, res, next) => {
           content: `
                       You are CliniQ360, a health loan and insurance agent voice assistant. 
                       Respond in JSON format with the required details.
-                       ${step === 1 ? prompt1 : step === 2 ? prompt2 : prompt1}
+                       ${
+                         step === 1
+                           ? prompt1
+                           : step === 2
+                           ? prompt2
+                           : step === 3
+                           ? prompt3
+                           : "hello"
+                       }
                   `,
         },
         {
@@ -77,6 +86,7 @@ export const voicebotController = async (req, res, next) => {
         formdata: parsedObject?.formData,
         ttsData: parsedObject?.ttsData,
         isFilled: parsedObject?.isFilled,
+        isVerify: parsedObject?.isVerify,
       });
     } else {
       res.status(500).json({ success: false, error: "Error generating audio" });

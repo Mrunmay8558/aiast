@@ -23,7 +23,7 @@ export const fetchImageController = async (req, res, next) => {
            email: "", // User's email address
            endUse: "", // The intended end-use of the form or service (options: education, health, travel, other)
            addressL1: "", // User's primary address line 1
-           addressL2: "", // User's secondary address line 2 (optional)
+           addressL2: "", // User's secondary address line 2 
            city: "", // User's city
            state: "", // User's state
            pincode: "" // User's postal code (PIN code)

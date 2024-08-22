@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useRef } from "react";
 import UploadImg from "./uploadImg";
 
 const chatStyles = {
@@ -43,12 +43,21 @@ const uploadImgStyle = {
 };
 
 const ChatHistory = ({ chats, setFormData, setStep }) => {
+  const chatContainerRef = useRef(null);
+
+  useEffect(() => {
+    // Scroll to the bottom of the chat container
+    if (chatContainerRef.current) {
+      chatContainerRef.current.scrollTop =
+        chatContainerRef.current.scrollHeight;
+    }
+  }, [chats]);
   return (
     <>
       <div style={uploadImgStyle}>
         <UploadImg setFormData={setFormData} setStep={setStep} />
       </div>
-      <div style={chatStyles}>
+      <div style={chatStyles} ref={chatContainerRef}>
         {chats.map((chat, index) => (
           <React.Fragment key={index}>
             {chat.sender === "user" ? (

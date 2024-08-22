@@ -33,10 +33,7 @@ export const audioToTextController = async (req, res, next) => {
     };
     const transBody = new Transcription(data);
     const result = await transBody.save();
-    console.log(result);
-    return res.status(200).json({
-      data: transcription.text,
-    });
+    return res.status(200).json(result);
   } catch (error) {
     next(error);
   }

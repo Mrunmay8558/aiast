@@ -13,6 +13,7 @@ const TTS = ({
   step,
   setStep,
 }) => {
+  const [isVerify, setIsVerify] = useState(null);
   const audioRef = useRef(null);
 
   useEffect(() => {
@@ -23,20 +24,25 @@ const TTS = ({
   }, [submit]);
 
   function checkStep() {
-    if (formdata) {
-      return !formdata.name ||
-        !formdata.age ||
-        !formdata.dob ||
-        !formdata.mobile_number ||
-        !formdata.aadhaar_number ||
-        !formdata.address.street ||
-        !formdata.address.locality ||
-        !formdata.address.city ||
-        !formdata.address.state ||
-        !formdata.address.country ||
-        !formdata.pincode
-        ? 2
-        : step;
+    if (formdata && step === 2) {
+      return (
+        (!formdata.name ||
+          !formdata.age ||
+          !formdata.dob ||
+          !formdata.mobile_number ||
+          !formdata.aadhaar_number ||
+          !formdata.address.street ||
+          !formdata.address.locality ||
+          !formdata.address.city ||
+          !formdata.address.state ||
+          !formdata.address.country ||
+          !formdata.pincode) &&
+        2
+      );
+    } else if (step === 3 && isVerify === false) {
+      return 2;
+    } else {
+      return step;
     }
   }
 
@@ -55,7 +61,7 @@ const TTS = ({
 
       const res = JSON.parse(response?.data);
       console.log(res);
-
+      setIsVerify(res?.isVerify);
       if (res?.formdata) setFormData(res?.formdata);
 
       if (res?.isFilled === true || res?.isFilled === null) {

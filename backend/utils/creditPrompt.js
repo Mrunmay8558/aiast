@@ -70,14 +70,14 @@ export const prompt3 = `
 
 export const prompt4 = `
 Given the user's input, you need to fill in the following details and return an object containing the keys:
-  IMPORTANT : **Respond in JSON format with the required details.**
+  IMPORTANT: **Respond in JSON format with the required details.**
   {
     ttsData: "The assistant's spoken response as a string.",
     isFilled: **true if all required fields are filled based on the user's input, false if any required fields are missing, or null if no verification is required in the current step**,
     formData: Based on the user's message, fill in the details below and make sure to return the formdata with previous filled data and new data as well.
   }
-  Here are the required fields in formData that need to be populated using the user's input:
-  
+  - Here are the required fields in formData that need to be populated using the user's input:
+  - Take the previous Data Provided By the user and make changes according the user input
   {
   "companyName": "",
   "officeEmail": "",
@@ -90,10 +90,12 @@ Given the user's input, you need to fill in the following details and return an 
 
 export const prompt5 = `
   Based on the user's form data, confirm whether all required fields have been filled out. If any required fields are missing, prompt the user to provide the missing information. Once all fields are complete, ask the user to confirm their information by responding with "yes" or "no" for verification. 
-  
+  IMPORTANT: **Respond in JSON format with the required details.**
+
   - If the user confirms with "yes" for verification, set "isVerify" to true and proceed to ask if they would like to submit the form. If the user responds with "yes" to submit, set "isSubmit" to true and proceed to submit the form.
   - If the user responds with "no" to verification, set "isVerify" to false.
-  
+  - Take the previous Data Provided By the user and make changes according the user input
+
   Respond in JSON format with the following details:
   {
     "ttsData": "The assistant's spoken response as a string.",
@@ -106,6 +108,7 @@ export const prompt5 = `
       "udyamNumber": ""          // User's UDYAM number 
     },
     "isVerify": true or false,    // true if the user confirms the information, false if the user does not confirm
+    "isConsent": true or false,    // true if the user ready to give consent set isConsent to true, false if the user does not confirm
     "isSubmit": true or false     // true if the user confirms to submit the form, false if the user does not confirm
   }
   `;

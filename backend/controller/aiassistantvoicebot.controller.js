@@ -3,6 +3,7 @@ import { AssemblyAI } from "assemblyai";
 import axios from "axios";
 import dotenv from "dotenv";
 import { createClient } from "@deepgram/sdk";
+import { prompt1, prompt2 } from "../utils/creditPrompt.js";
 dotenv.config();
 
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
@@ -18,11 +19,7 @@ const deepgram = createClient(process.env.DEEPGRAM_API);
 export const voicebotController = async (req, res, next) => {
   try {
     const { transcribedText, step } = req.body;
-    // if (!transcribedText) {
-    //   return res.status(400).json({ error: "Text is required" });
-    // }
 
-    // Generate the assistant's response
     const completion = await groq.chat.completions.create({
       messages: [
         {
@@ -31,54 +28,22 @@ export const voicebotController = async (req, res, next) => {
             step === 1
               ? "Hii"
               : step === 2
-              ? JSON.stringify(transcribedText.formdata)
-              : "hello",
+              ? transcribedText.message
+              : step === 3
+              ? transcribedText.formdata
+              : "hey",
         },
         {
           role: "system",
           content: `
-            You are CliniQ360, a health loan and insurance agent voice assistant. Follow these steps:
-            
-             Always return an object containing the following keys:
-            {
-              ttsData: "the assistant's spoken response as a string",
-              isFilled: true if all required fields are filled, false if any are missing, or null if no verification is required in the current step
-            }
-            Important: [Only return the JSON object. Do not add any text before or after the object.]
-            Dont add anything alphaB
-      
-            Step 1: 'Welcome the user with them message like : Welcome to  CliniQ360 Health Loan and Insurance Assistant. Please fill out the Personal Detail form or upload your Aadhaar Card and PAN Card Photo for automatic documentation.
-        
-            Step 2: 'Verifying your data. Here are the required fields:'
-            {
-              "name": "",
-              "age": "",
-              "dob": "",
-              "aadhaar_number": "",
-              "address": {
-                "street": "",
-                "locality": "",
-                "city": "",
-                "state": "",
-                "country": ""
-              },
-              "pincode": "",
-              "mobile_number": ""
-            }
-            The user provided the following data: ${
-              step === 2
-                ? JSON.stringify(transcribedText.formdata)
-                : transcribedText.message
-            }. Confirm whether all required fields have been filled out and inCase the Required fields are not filled, ask the user to fill the required fields else ask the user to submit the form, and give their consent and return isFilled as true or false based on the user's response.'
-        
-            Step 3: 'Now, provide your Work Details, such as your company name. Verifying your work details. After verifying, ask the user to submit the form and give their consent.'
-        
-            Step 4: 'Thank you for filling out the form.'
-          `,
+                      You are CliniQ360, a health loan and insurance agent voice assistant. 
+                      Respond in JSON format with the required details.
+                       ${step === 1 ? prompt1 : step === 2 ? prompt2 : prompt1}
+                  `,
         },
         {
           role: "assistant",
-          content: `This is step: ${step}. If user provides step 1, then welcome the user; if step 2, check the fields. Don't add anything in front of the object.`,
+          content: `According to the user input please provide the correct details`,
         },
       ],
       model: "llama3-70b-8192",
@@ -114,6 +79,7 @@ export const voicebotController = async (req, res, next) => {
         success: true,
         data: base64Audio,
         step: step,
+        formdata: parsedObject.formData,
         ttsData: parsedObject?.ttsData,
         isFilled: parsedObject?.isFilled,
       });

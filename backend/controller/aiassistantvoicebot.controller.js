@@ -8,12 +8,6 @@ dotenv.config();
 
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
-const client = new AssemblyAI({
-  apiKey: "05565ac256aa47a6a7382658684fd21c",
-});
-
-let step1 = {};
-
 const deepgram = createClient(process.env.DEEPGRAM_API);
 
 export const voicebotController = async (req, res, next) => {
@@ -28,7 +22,8 @@ export const voicebotController = async (req, res, next) => {
             step === 1
               ? "Hii"
               : step === 2
-              ? transcribedText.message
+              ? transcribedText?.message +
+                JSON.stringify(transcribedText?.formdata)
               : step === 3
               ? transcribedText.formdata
               : "hey",
@@ -79,7 +74,7 @@ export const voicebotController = async (req, res, next) => {
         success: true,
         data: base64Audio,
         step: step,
-        formdata: parsedObject.formData,
+        formdata: parsedObject?.formData,
         ttsData: parsedObject?.ttsData,
         isFilled: parsedObject?.isFilled,
       });

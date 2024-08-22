@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
+import UploadImg from "./uploadImg";
 
 const chatStyles = {
   display: "flex",
@@ -32,41 +33,55 @@ const botInputStyle = {
   gap: "10px",
 };
 
-const ChatHistory = ({ chats }) => {
+const uploadImgStyle = {
+  display: "flex",
+  flexDirection: "column",
+  justifyContent: "center",
+  alignItems: "center",
+  width: "90%",
+  padding: "10px",
+};
+
+const ChatHistory = ({ chats, setFormData, setStep }) => {
   return (
-    <div style={chatStyles}>
-      {chats.map((chat, index) => (
-        <React.Fragment key={index}>
-          {chat.sender === "user" ? (
-            <div style={userInputStyle}>
-              <span
-                style={{
-                  backgroundColor: "grey",
-                  padding: "10px",
-                  borderRadius: "10px",
-                }}
-              >
-                {chat.message}
-              </span>
-            </div>
-          ) : (
-            <div style={botInputStyle}>
-              <span
-                style={{
-                  backgroundColor: "black",
-                  padding: "10px",
-                  borderRadius: "10px",
-                  color: "white",
-                }}
-              >
-                {chat.message}
-              </span>
-              <audio src={chat.url} autoPlay={true} controls />
-            </div>
-          )}
-        </React.Fragment>
-      ))}
-    </div>
+    <>
+      <div style={uploadImgStyle}>
+        <UploadImg setFormData={setFormData} setStep={setStep} />
+      </div>
+      <div style={chatStyles}>
+        {chats.map((chat, index) => (
+          <React.Fragment key={index}>
+            {chat.sender === "user" ? (
+              <div style={userInputStyle}>
+                <span
+                  style={{
+                    backgroundColor: "grey",
+                    padding: "10px",
+                    borderRadius: "10px",
+                  }}
+                >
+                  {chat.message}
+                </span>
+              </div>
+            ) : (
+              <div style={botInputStyle}>
+                <span
+                  style={{
+                    backgroundColor: "black",
+                    padding: "10px",
+                    borderRadius: "10px",
+                    color: "white",
+                  }}
+                >
+                  {chat.message}
+                </span>
+                <audio src={chat.url} autoPlay={true} controls />
+              </div>
+            )}
+          </React.Fragment>
+        ))}
+      </div>
+    </>
   );
 };
 

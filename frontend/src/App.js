@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import "./App.css";
-import UploadImg from "./components/uploadImg";
 import Form from "./components/form";
 import TTS from "./components/tts";
 import STT from "./components/stt";
@@ -82,7 +81,11 @@ function App() {
   return (
     <div className="App" style={PageStyle}>
       <div style={chatBotStyle}>
-        <ChatHistory chats={userChats} />
+        <ChatHistory
+          chats={userChats}
+          setFormData={setFormData}
+          setStep={setStep}
+        />
         <STT
           transcriptionText={transcriptionText}
           setTranscriptionText={setTranscriptionText}
@@ -93,12 +96,12 @@ function App() {
           transcriptionText={transcriptionText}
           addURL={addAudioUrl}
           formdata={formData}
+          setFormData={setFormData}
           step={step}
           setStep={setStep}
           submit={submit}
           setSubmit={setSubmit}
         />
-        <UploadImg setFormData={setFormData} setStep={setStep} />
       </div>
       <div style={formContainerStyle}>
         <Form

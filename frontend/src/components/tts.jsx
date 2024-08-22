@@ -7,6 +7,7 @@ const TTS = ({
   transcriptionText,
   addURL,
   formdata,
+  setFormData,
   submit,
   setSubmit,
   step,
@@ -31,6 +32,8 @@ const TTS = ({
 
       const res = JSON.parse(response?.data);
       console.log(res);
+
+      if (res?.formdata) setFormData(res?.formdata);
 
       if (res?.isFilled === true || res?.isFilled === null) {
         setStep(res?.step + 1);

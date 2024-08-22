@@ -3,12 +3,48 @@ import { AssemblyAI } from "assemblyai";
 import axios from "axios";
 import dotenv from "dotenv";
 import { createClient } from "@deepgram/sdk";
-import { prompt1, prompt2, prompt3 } from "../utils/creditPrompt.js";
+import {
+  prompt1,
+  prompt2,
+  prompt3,
+  prompt4,
+  prompt5,
+} from "../utils/creditPrompt.js";
+import Transcription from "../model/transcribedText.model.js";
 dotenv.config();
 
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
 const deepgram = createClient(process.env.DEEPGRAM_API);
+
+export const audioToTextController = async (req, res, next) => {
+  try {
+    const { audio_url } = req.body;
+
+    if (!audio_url) return res.status(404).json({ error: "Audio Not Found!" });
+
+    const transcription = await groq.audio.transcriptions.create({
+      file: audio_url,
+      model: "whisper-large-v3",
+      temperature: 0,
+      response_format: "verbose_json",
+    });
+
+    if (!transcription)
+      return res.status(404).json({ error: "Error While Transcription" });
+    const data = {
+      transcribedText: transcription.text,
+    };
+    const transBody = new Transcription(data);
+    const result = await transBody.save();
+    console.log(result);
+    return res.status(200).json({
+      data: transcription.text,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
 
 export const voicebotController = async (req, res, next) => {
   try {
@@ -27,6 +63,12 @@ export const voicebotController = async (req, res, next) => {
               : step === 3
               ? JSON.stringify(transcribedText.formdata) +
                 transcribedText.message
+              : step === 4
+              ? JSON.stringify(transcribedText.formData) +
+                transcribedText.message
+              : step === 5
+              ? JSON.stringify(transcribedText.formData) +
+                transcribedText.message
               : "hey",
         },
         {
@@ -41,7 +83,11 @@ export const voicebotController = async (req, res, next) => {
                            ? prompt2
                            : step === 3
                            ? prompt3
-                           : "hello"
+                           : step === 4
+                           ? prompt4
+                           : step === 5
+                           ? prompt5
+                           : "hey"
                        }
                   `,
         },

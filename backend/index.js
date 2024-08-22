@@ -5,14 +5,14 @@ import dotenv from "dotenv";
 import aivoicebotRoute from "./routes/aiassistantvoicebot.route.js";
 import mongoose from "mongoose";
 
-// mongoose
-//   .connect()
-//   .then((res) => {
-//     console.log("DataBase Connected");
-//   })
-//   .catch((err) => {
-//     console.log(err);
-//   });
+mongoose
+  .connect(process.env.MONGO_URL)
+  .then((res) => {
+    console.log("DataBase Connected");
+  })
+  .catch((err) => {
+    console.log(err);
+  });
 
 dotenv.config();
 const app = express();

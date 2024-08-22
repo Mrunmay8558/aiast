@@ -23,7 +23,7 @@ export const prompt2 = `
            firstName: "", // User's first name
            lastName: "", // User's last name
            dob: "", // User's date of birth
-           gender: "", // User's gender
+           gender: "", // User's gender Based on the Gender Give just M or F
            pan: "", // User's PAN (Permanent Account Number)
            contactNumber: "", // User's contact number
            email: "", // User's email address

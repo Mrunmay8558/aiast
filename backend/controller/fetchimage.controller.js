@@ -13,22 +13,21 @@ export const fetchImageController = async (req, res, next) => {
 
     const prompt = `
       Please analyze the provided image of an import document and extract the relevant details to match the following JSON format. The document should include information such as name, age, date of birth, Aadhaar number, address details, pincode, and mobile number. Here is the required JSON structure:
-  
-      {
-        "name": "",
-        "age": "",
-        "dob": "",
-        "aadhaar_number": "",
-        "address": {
-          "street": "",
-          "locality": "",
-          "city": "",
-          "state": "",
-          "country": ""
-        },
-        "pincode": "",
-        "mobile_number": ""
-      }
+       {
+           firstName: "", // User's first name
+           lastName: "", // User's last name
+           dob: "", // User's date of birth
+           gender: "", // User's gender Based on the Gender Give just M stands for Male or Female
+           pan: "", // User's PAN (Permanent Account Number)
+           contactNumber: "", // User's contact number
+           email: "", // User's email address
+           endUse: "", // The intended end-use of the form or service (options: education, health, travel, other)
+           addressL1: "", // User's primary address line 1
+           addressL2: "", // User's secondary address line 2 (optional)
+           city: "", // User's city
+           state: "", // User's state
+           pincode: "" // User's postal code (PIN code)
+          }
   
       Please ensure that the extracted data matches this structure accurately. Your response should be a valid JSON object only, starting with "{" and ending with "}". Do not include any additional text or explanations. If certain fields are missing or ambiguous, make a note of it within the JSON object. 
     `;

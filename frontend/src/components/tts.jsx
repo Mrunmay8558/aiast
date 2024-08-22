@@ -25,21 +25,20 @@ const TTS = ({
 
   function checkStep() {
     if (formdata && step === 2) {
-      return (
-        (!formdata.name ||
-          !formdata.age ||
-          !formdata.dob ||
-          !formdata.mobile_number ||
-          !formdata.aadhaar_number ||
-          !formdata.address.street ||
-          !formdata.address.locality ||
-          !formdata.address.city ||
-          !formdata.address.state ||
-          !formdata.address.country ||
-          !formdata.pincode) &&
-        2
-      );
-    } else if (step === 3 && isVerify === false) {
+      return !formdata.name ||
+        !formdata.age ||
+        !formdata.dob ||
+        !formdata.mobile_number ||
+        !formdata.aadhaar_number ||
+        !formdata.address.street ||
+        !formdata.address.locality ||
+        !formdata.address.city ||
+        !formdata.address.state ||
+        !formdata.address.country ||
+        !formdata.pincode
+        ? 2
+        : step;
+    } else if (step === 3 && (isVerify === false || isVerify === null)) {
       return 2;
     } else {
       return step;

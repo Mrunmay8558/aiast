@@ -1,5 +1,8 @@
 import React, { useState, useRef, useEffect } from "react";
 import groqComponent from "./groqWhisper";
+import axios from "axios";
+
+const BaseURL = "http://localhost:8000/";
 
 const STT = ({ setTranscriptionText, addChat, setSubmit }) => {
   const [recording, setRecording] = useState(false);
@@ -53,7 +56,8 @@ const STT = ({ setTranscriptionText, addChat, setSubmit }) => {
             const audioBlob = new Blob(audioChunks.current, {
               type: "audio/wav",
             });
-            convertToAudioFile(audioBlob);
+            // convertToAudioFile(audioBlob);
+            sttPost(audioBlob);
           } else {
             console.error("No audio chunks collected.");
           }
@@ -78,6 +82,37 @@ const STT = ({ setTranscriptionText, addChat, setSubmit }) => {
         audioContextRef.current.close();
       }
       setRecording(false);
+    }
+  };
+
+  const sttPost = async (audioBlob) => {
+    if (audioBlob && audioBlob?.size > 0) {
+      const audioFile = new File([audioBlob], "recording.wav", {
+        type: "audio/wav",
+      });
+      try {
+        const formData = new FormData();
+        formData.append("audioFile", audioFile);
+
+        const response = await axios.post(
+          `${BaseURL}v1/transcribe-audio`,
+          formData,
+          {
+            headers: {
+              "Content-Type": "multipart/form-data",
+            },
+          }
+        );
+
+        const transcriptionText = response.data.transcription;
+        setTranscriptionText(transcriptionText);
+        addChat(transcriptionText);
+        setSubmit(true);
+      } catch (error) {
+        console.error("Error during transcription:", error);
+      }
+    } else {
+      console.error("AudioBlob is empty or null");
     }
   };
 

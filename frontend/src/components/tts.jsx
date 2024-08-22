@@ -25,21 +25,31 @@ const TTS = ({
 
   function checkStep() {
     if (formdata && step === 2) {
-      return !formdata.name ||
-        !formdata.age ||
+      return !formdata.firstName ||
+        !formdata.lastName ||
         !formdata.dob ||
-        !formdata.mobile_number ||
-        !formdata.aadhaar_number ||
-        !formdata.address.street ||
-        !formdata.address.locality ||
-        !formdata.address.city ||
-        !formdata.address.state ||
-        !formdata.address.country ||
-        !formdata.pincode
+        !formdata.contactNumber ||
+        !formdata.pan ||
+        !formdata.pincode ||
+        !formdata.city ||
+        !formdata.state ||
+        !formdata.gender ||
+        !formdata.addressL1 ||
+        !formdata.addressL2 ||
+        !formdata.email ||
+        !formdata.endUse
         ? 2
         : step;
     } else if (step === 3 && (isVerify === false || isVerify === null)) {
       return 2;
+    } else if (formdata && step === 4) {
+      return !formdata.companyName ||
+        !formdata.officialEmail ||
+        !formdata.employmentType ||
+        !formdata.income ||
+        !formdata.udyamNumber
+        ? 4
+        : step;
     } else {
       return step;
     }
@@ -61,7 +71,12 @@ const TTS = ({
       const res = JSON.parse(response?.data);
       console.log(res);
       setIsVerify(res?.isVerify);
-      if (res?.formdata) setFormData(res?.formdata);
+      if (res?.formdata) {
+        setFormData((prevFormData) => ({
+          ...prevFormData,
+          ...res.formdata,
+        }));
+      }
 
       if (res?.isFilled === true || res?.isFilled === null) {
         setStep(res?.step + 1);

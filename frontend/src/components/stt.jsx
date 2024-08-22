@@ -1,5 +1,4 @@
 import React, { useState, useRef, useEffect } from "react";
-import groqComponent from "./groqWhisper";
 import axios from "axios";
 
 const BaseURL = "http://localhost:8000/";
@@ -56,7 +55,6 @@ const STT = ({ setTranscriptionText, addChat, setSubmit }) => {
             const audioBlob = new Blob(audioChunks.current, {
               type: "audio/wav",
             });
-            // convertToAudioFile(audioBlob);
             sttPost(audioBlob);
           } else {
             console.error("No audio chunks collected.");
@@ -104,25 +102,10 @@ const STT = ({ setTranscriptionText, addChat, setSubmit }) => {
           }
         );
 
-        const transcriptionText = response.data.transcription;
-        setTranscriptionText(transcriptionText);
-        addChat(transcriptionText);
-        setSubmit(true);
-      } catch (error) {
-        console.error("Error during transcription:", error);
-      }
-    } else {
-      console.error("AudioBlob is empty or null");
-    }
-  };
+        const res = response.data;
+        console.log("Transcription response:", res);
 
-  const convertToAudioFile = async (audioBlob) => {
-    if (audioBlob && audioBlob?.size > 0) {
-      const audioFile = new File([audioBlob], "recording.wav", {
-        type: "audio/wav",
-      });
-      try {
-        const transcriptionText = await groqComponent(audioFile);
+        const transcriptionText = res.transcribedText;
         setTranscriptionText(transcriptionText);
         addChat(transcriptionText);
         setSubmit(true);

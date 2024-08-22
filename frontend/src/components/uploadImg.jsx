@@ -18,6 +18,7 @@ const UploadImg = ({ setFormData, setStep }) => {
           });
           if (response.data) {
             setFormData(response.data);
+
             setStep(2);
           }
         };

@@ -42,20 +42,34 @@ function App() {
   const [transcriptionText, setTranscriptionText] = useState(null);
   const [userChats, setUserChats] = useState([]);
   const [formData, setFormData] = useState({
-    name: "",
-    age: "",
+    firstName: "",
+    lastName: "",
     dob: "",
-    aadhaar_number: "",
-    address: {
-      street: "",
-      locality: "",
-      city: "",
-      state: "",
-      country: "",
-    },
+    contactNumber: "",
+    pan: "",
     pincode: "",
-    mobile_number: "",
+    city: "",
+    state: "",
+    email: "",
+    gender: "",
+    addressL1: "",
+    addressL2: "",
+    endUse: "",
+    companyName: "",
+    officialEmail: "",
+    employmentType: "",
+    income: "",
+    udyamNumber: "",
+    aa_id: "",
+    bureauConsent: true,
   });
+
+  useEffect(() => {
+    setFormData((prevFormData) => ({
+      ...prevFormData,
+      aa_id: prevFormData.contactNumber + "@finvu",
+    }));
+  }, [formData.contactNumber]);
 
   useEffect(() => {
     if (step === 1) {

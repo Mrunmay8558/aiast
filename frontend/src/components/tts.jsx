@@ -22,11 +22,34 @@ const TTS = ({
     }
   }, [submit]);
 
+  function checkStep() {
+    if (formdata) {
+      return !formdata.name ||
+        !formdata.age ||
+        !formdata.dob ||
+        !formdata.mobile_number ||
+        !formdata.aadhaar_number ||
+        !formdata.address.street ||
+        !formdata.address.locality ||
+        !formdata.address.city ||
+        !formdata.address.state ||
+        !formdata.address.country ||
+        !formdata.pincode
+        ? 2
+        : step;
+    }
+  }
+
   const handleSendText = async (text) => {
     try {
+      console.log("Step:", checkStep());
+
       const response = await axios.post(
         `${BaseURL}v1/get-audio-file`,
-        { transcribedText: { message: text, formdata: formdata }, step: step },
+        {
+          transcribedText: { message: text, formdata: formdata },
+          step: checkStep(),
+        },
         { responseType: "text" }
       );
 

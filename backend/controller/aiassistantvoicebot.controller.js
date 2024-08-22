@@ -20,9 +20,7 @@ const deepgram = createClient(process.env.DEEPGRAM_API);
 export const audioToTextController = async (req, res, next) => {
   try {
     const { audio_url } = req.body;
-
     if (!audio_url) return res.status(404).json({ error: "Audio Not Found!" });
-
     const transcription = await groq.audio.transcriptions.create({
       file: audio_url,
       model: "whisper-large-v3",

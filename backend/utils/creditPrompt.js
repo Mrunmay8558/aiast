@@ -41,39 +41,40 @@ export const prompt2 = `
       `;
 
 export const prompt3 = `
-     Based on the user's form data, confirm whether all required fields have been filled out. If any required fields are missing, prompt the user to provide the missing information.
-
-  - **Once all fields are complete:**
-      1. Ask the user to confirm their information by responding with "yes" or "no" for verification.
-      2. If the user responds with "yes" to verification, set "isVerify" to true and proceed to ask them to fill out the Work Details Form.
-      3. If the user responds with "no" to verification, set "isVerify" to false and prompt the user to verify their information again.
-
-    - **IMPORTANT:** It is crucial to ask for confirmation for verification before proceeding.
-
-    -> IMPORTANT ****Respond in JSON format with the following details:
-
-    {
-      "ttsData": "The assistant's spoken response as a string.",
-      "isFilled": true or false, // Set true if all required fields are filled based on the user's input, set false if any required fields are missing
-      "formData": {
-        "firstName": "",       // User's first name
-        "lastName": "",        // User's last name
-        "dob": "",             // User's date of birth
-        "gender": "",          // User's gender
-        "pan": "",             // User's PAN (Permanent Account Number)
-        "contactNumber": "",   // User's contact number
-        "email": "",           // User's email address
-        "endUse": "",          // The intended end-use of the form or service
-        "addressL1": "",       // User's primary address line 1
-        "addressL2": "",       // User's secondary address line 2
-        "city": "",            // User's city
-        "state": "",           // User's state
-        "pincode": ""          // User's postal code (PIN code)
+      Based on the user's form data, confirm whether all required fields have been filled out. If any required fields are missing, prompt the user to provide the missing information.
+      
+      - **Once all fields are complete:**
+        1. Ask the user to confirm their information by responding with "yes" or "no" for verification.
+        2. If the user responds with "yes" to verification:
+           - Set "isVerify" to true and proceed to ask them to fill out the Work Details Form.
+        3. If the user responds with "no" to verification:
+           - Set "isVerify" to false and prompt the user to verify their information again.
+      
+      - **If the user has already verified the data:** Skip the verification step and proceed to the next required step.
+      
+      Respond in JSON format with the following details:
+      
+      {
+        "ttsData": "The assistant's spoken response as a string.",
+        "isFilled": true or false, // true if all required fields are filled based on the user's input, false if any required fields are missing
+        "formData": {
+          "firstName": "",       // User's first name
+          "lastName": "",        // User's last name
+          "dob": "",             // User's date of birth
+          "gender": "",          // User's gender
+          "pan": "",             // User's PAN (Permanent Account Number)
+          "contactNumber": "",   // User's contact number
+          "email": "",           // User's email address
+          "endUse": "",          // The intended end-use of the form or service
+          "addressL1": "",       // User's primary address line 1
+          "addressL2": "",       // User's secondary address line 2
+          "city": "",            // User's city
+          "state": "",           // User's state
+          "pincode": ""          // User's postal code (PIN code)
         },
-      "isVerify": true or false // Set true if the user say "YES" for verification, set false if the user does not confirm and ask them to verify again
-    }
-`;
-
+        "isVerify": true or false // true if the user confirms the information is correct, false if the user does not confirm
+      }
+      `;
 export const prompt4 = `
       **Objective:**
       Based on the user's input, update the form data while preserving any existing details. The response should reflect the user's latest input without erasing previously provided information.

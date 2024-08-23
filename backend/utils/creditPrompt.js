@@ -41,57 +41,38 @@ export const prompt2 = `
       `;
 
 export const prompt3 = `
-      **Step 1: Field Verification**
-      - Check whether all required fields in the user's form data are filled. The required fields include:
-        - "firstName": User's first name.
-        - "lastName": User's last name.
-        - "dob": User's date of birth.
-        - "gender": User's gender.
-        - "pan": User's PAN (Permanent Account Number).
-        - "contactNumber": User's contact number.
-        - "email": User's email address.
-        - "endUse": The intended end-use of the form or service.
-        - "addressL1": User's primary address line 1.
-        - "addressL2": User's secondary address line 2.
-        - "city": User's city.
-        - "state": User's state.
-        - "pincode": User's postal code (PIN code).
-      
-      - If any of these fields are missing or incomplete, prompt the user to provide the missing information.
-      - Set the "isFilled" flag:
-        - **true**: All required fields are filled.
-        - **false**: One or more required fields are missing.
-      
-      **Step 2: Verification**
-      - Once all required fields are filled, ask the user to confirm their information by responding with "yes" or "no":
-        - If the user responds with "yes," set "isVerify" to **true** and proceed to the next step, which is asking them to fill out the Work Details Form.
-        - If the user responds with "no," set "isVerify" to **false** and prompt the user to review and verify their information again.
-      
-      **Important Notes:**
-      - Always ensure that confirmation for verification is obtained before proceeding to the next form or step.
-      
-      **JSON Response Format:**
-      {
-        "ttsData": "The assistant's spoken response as a string, indicating whether any fields are missing, confirming the information, or prompting for verification.",
-        "isFilled": true or false, // true if all required fields are filled, false if any required fields are missing
-        "formData": {
-          "firstName": "",       // User's first name
-          "lastName": "",        // User's last name
-          "dob": "",             // User's date of birth
-          "gender": "",          // User's gender
-          "pan": "",             // User's PAN (Permanent Account Number)
-          "contactNumber": "",   // User's contact number
-          "email": "",           // User's email address
-          "endUse": "",          // The intended end-use of the form or service
-          "addressL1": "",       // User's primary address line 1
-          "addressL2": "",       // User's secondary address line 2
-          "city": "",            // User's city
-          "state": "",           // User's state
-          "pincode": ""          // User's postal code (PIN code)
+     Based on the user's form data, confirm whether all required fields have been filled out. If any required fields are missing, prompt the user to provide the missing information.
+
+  - **Once all fields are complete:**
+      1. Ask the user to confirm their information by responding with "yes" or "no" for verification.
+      2. If the user responds with "yes" to verification, set "isVerify" to true and proceed to ask them to fill out the Work Details Form.
+      3. If the user responds with "no" to verification, set "isVerify" to false and prompt the user to verify their information again.
+
+    - **IMPORTANT:** It is crucial to ask for confirmation for verification before proceeding.
+
+    -> IMPORTANT ****Respond in JSON format with the following details:
+
+    {
+      "ttsData": "The assistant's spoken response as a string.",
+      "isFilled": true or false, // Set true if all required fields are filled based on the user's input, set false if any required fields are missing
+      "formData": {
+        "firstName": "",       // User's first name
+        "lastName": "",        // User's last name
+        "dob": "",             // User's date of birth
+        "gender": "",          // User's gender
+        "pan": "",             // User's PAN (Permanent Account Number)
+        "contactNumber": "",   // User's contact number
+        "email": "",           // User's email address
+        "endUse": "",          // The intended end-use of the form or service
+        "addressL1": "",       // User's primary address line 1
+        "addressL2": "",       // User's secondary address line 2
+        "city": "",            // User's city
+        "state": "",           // User's state
+        "pincode": ""          // User's postal code (PIN code)
         },
-        "isVerify": true or false // Set true if the user say "YES" for verification, set false if the user does not confirm and ask them to verify again
-      }
-      `;
+      "isVerify": true or false // Set true if the user say "YES" for verification, set false if the user does not confirm and ask them to verify again
+    }
+`;
 
 export const prompt4 = `
       **Objective:**

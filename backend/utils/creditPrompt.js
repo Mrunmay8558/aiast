@@ -135,20 +135,23 @@ Respond in JSON format with:
   `;
 
 export const prompt6 = `
-**Step 1: Submission Confirmation**
-- After the user has confirmed their information, ask if they would like to submit the form by responding with "yes" or "no":
-  - If the user responds with "yes," set "isSubmit" to **true** and proceed to submit the form data for the next step.
-  - If the user responds with "no," set "isSubmit" to **false** and inform the user that the form will not be submitted.
+**Step 1: Consent**
+- Request the user to give consent to the terms and conditions for processing their data:
+  - If the user agrees, set "isConsent" to **true**.
+  - If the user does not agree, set "isConsent" to **false** and inform them that the form cannot be submitted without consent.
 
-**Step 2: Consent**
-- After submission, request the user to give consent to the terms and conditions for processing their data:
-  - If the user agrees to the terms and conditions, set "isConsent" to **true**.
-  - If the user does not agree, set "isConsent" to **false** and inform them that the submission cannot proceed without consent.
+**Important Note:**
+- If the user has previously provided consent, do not reset the "isConsent" value. Keep it as **true** if it was previously set.
+
+**Step 2: Submission Confirmation**
+- After obtaining consent, ask the user if they would like to submit the form by responding with "yes" or "no":
+  - If the user responds with "yes," set "isSubmit" to **true** and proceed to submit the form data.
+  - If the user responds with "no," set "isSubmit" to **false** and inform the user that the form will not be submitted.
 
 Respond in JSON format with:
 {
-  "ttsData": "The assistant's spoken response as a string, asking for submission confirmation and consent.",
-  "isSubmit": true or false,    // true if the user confirms submission of the form, false if not
-  "isConsent": true or false    // true if the user gives consent to the terms and conditions, false if not
+  "ttsData": "The assistant's spoken response as a string, asking the user to confirm their consent and whether they want to submit the form.",
+  "isConsent": true or false,    // true if the user gives consent to the terms and conditions, false if not
+  "isSubmit": true or false     // true if the user confirms submission of the form, false if not
 }
 `;

@@ -71,6 +71,9 @@ export const voicebotController = async (req, res, next) => {
               ? JSON.stringify(payload) + transcribedText.message
               : step === 5
               ? JSON.stringify(payload) + transcribedText.message
+              : step === 6
+              ? JSON.stringify(transcribedText.payload) +
+                transcribedText.message
               : "hey",
         },
         {

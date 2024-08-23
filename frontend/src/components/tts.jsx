@@ -74,8 +74,8 @@ const TTS = ({
     //   return 4;}
     else if (step === 6 && (isVerify === false || isVerify === null)) {
       return 5;
-    } else if (step === 6 && isSubmit === false) {
-      return;
+    } else if (step === 6 && isConsent === true && isSubmit === false) {
+      return 1;
     } else {
       return step;
     }

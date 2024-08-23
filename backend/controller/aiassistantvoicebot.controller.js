@@ -8,6 +8,7 @@ import {
   prompt3,
   prompt4,
   prompt5,
+  prompt6,
 } from "../utils/creditPrompt.js";
 import Transcription from "../model/transcribedText.model.js";
 dotenv.config();
@@ -88,6 +89,8 @@ export const voicebotController = async (req, res, next) => {
                            ? prompt4
                            : step === 5
                            ? prompt5
+                           : step === 6
+                           ? prompt6
                            : "hey"
                        }
                   `,
@@ -134,8 +137,10 @@ export const voicebotController = async (req, res, next) => {
         ttsData: parsedObject?.ttsData,
         isFilled: parsedObject?.isFilled,
         isVerify: parsedObject?.isVerify,
-        isSubmit: parsedObject?.isSubmit || false,
-        isConsent: parsedObject?.isConsent || false,
+        isSubmit:
+          parsedObject?.isSubmit === null ? false : parsedObject?.isSubmit,
+        isConsent:
+          parsedObject?.isConsent === null ? false : parsedObject?.isConsent,
       });
     } else {
       res.status(500).json({ success: false, error: "Error generating audio" });

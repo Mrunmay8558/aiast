@@ -99,55 +99,56 @@ Structure the JSON response as follows:
   `;
 
 export const prompt5 = `
-Based on the user's form data, confirm whether all required fields have been filled out. If any required fields are missing, prompt the user to provide the missing information. Once all fields are complete:
+Based on the user's form data, confirm whether all required fields have been filled out. If any required fields are missing, prompt the user to provide the missing information.
 
-- **IMPORTANT:** Take the previous data provided by the user and dont overwrite it keep it as it is and make change when users say only.
+**Step 1: Field Verification**
+- Check if the following required fields in the user's form data are filled:
+  - "companyName": The name of the company the user is associated with.
+  - "officialEmail": The user's official email address.
+  - "employmentType": The type of employment (e.g., full-time, part-time, freelance).
+  - "income": The user's reported income.
+  - "udyamNumber": The UDYAM registration number for the company.
 
-1. Ask the user to confirm their information by responding with "yes" or "no" for verification.
-   - If the user responds with "yes," set "isVerify" to true.
-   - If the user responds with "no," set "isVerify" to false and prompt the user to verify the information again.
+- If any of these fields are missing or empty, prompt the user to provide the missing information.
+- Set the "isFilled" flag:
+  - **true**: All required fields are filled.
+  - **false**: One or more required fields are missing.
 
-2. Ask the user to confirm if they would like to submit the form by responding with "yes" or "no" for form submission.
-   - If the user responds with "yes," set "isSubmit" to true and proceed to submit the form.
+**Step 2: Verification**
+- Once all required fields are filled, ask the user to confirm that the information is correct by responding with "yes" or "no":
+  - If the user responds with "yes," set "isVerify" to **true**.
+  - If the user responds with "no," set "isVerify" to **false** and prompt the user to review and correct the information.
 
-3. After submission, ask the user to give consent by agreeing to the terms and conditions before submitting the document.
-   - If the user gives consent, set "isConsent" to true.
-   - If the user does not give consent, set "isConsent" to false.
-
-Respond in JSON format with the following details:
-
+Respond in JSON format with:
 {
-  "ttsData": "The assistant's spoken response as a string.",
-  Given the user's input, populate the following details and return an object containing the keys:
-
-- **IMPORTANT:** Respond in JSON format with the required details.
-- **IMPORTANT:** When the user sends their previous details, do not erase or overwrite them. Instead, update or correct the details based on the user's input and return the response.
-
-Structure the JSON response as follows:
-
-{
-  "ttsData": "The assistant's spoken response as a string.",
-  "isFilled": true or false, // true if all required fields are filled based on the user's input, false if any required fields are missing, or null if no verification is required in the current step
-  "formData": {
-    "companyName": "",       // Populate with the user's input or retain the previous value if not updated
-    "officialEmail": "",       // Populate with the user's input or retain the previous value if not updated
-    "employmentType": "",    // Populate with the user's input or retain the previous value if not updated
-    "income": "",            // Populate with the user's input or retain the previous value if not updated
-    "udyamNumber": ""        // Populate with the user's input or retain the previous value if not updated
-  }
-}
-
-- Ensure that the output reflects the user's input as accurately as possible.
-- If any fields are missing from the user's input, they should remain as they were previously or empty if no previous value exists.
+  "ttsData": "The assistant's spoken response as a string, indicating whether any fields are missing or if confirmation is needed.",
+  "isFilled": true or false, // true if all required fields are filled, false if any required fields are missing
   "formData": {
     "companyName": "",          // User's company name
-    "officeEmail": "",          // User's office email
+    "officialEmail": "",        // User's office email
     "employmentType": "",       // User's employment type
     "income": "",               // User's income
     "udyamNumber": ""           // User's UDYAM number
   },
-  "isVerify": true or false,    // true if the user confirms the information, false if the user does not confirm
-  "isSubmit": true or false,    // true if the user confirms to submit the form, false if the user does not confirm
-  "isConsent": true or false    // true if the user is ready to give consent, false if the user does not give consent
+  "isVerify": true or false    // true if the user confirms the information is correct, false if the user does not confirm
 }
   `;
+
+export const prompt6 = `
+**Step 1: Submission Confirmation**
+- After the user has confirmed their information, ask if they would like to submit the form by responding with "yes" or "no":
+  - If the user responds with "yes," set "isSubmit" to **true** and proceed to submit the form data for the next step.
+  - If the user responds with "no," set "isSubmit" to **false** and inform the user that the form will not be submitted.
+
+**Step 2: Consent**
+- After submission, request the user to give consent to the terms and conditions for processing their data:
+  - If the user agrees to the terms and conditions, set "isConsent" to **true**.
+  - If the user does not agree, set "isConsent" to **false** and inform them that the submission cannot proceed without consent.
+
+Respond in JSON format with:
+{
+  "ttsData": "The assistant's spoken response as a string, asking for submission confirmation and consent.",
+  "isSubmit": true or false,    // true if the user confirms submission of the form, false if not
+  "isConsent": true or false    // true if the user gives consent to the terms and conditions, false if not
+}
+`;

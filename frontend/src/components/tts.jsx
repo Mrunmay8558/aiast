@@ -14,6 +14,7 @@ const TTS = ({
   setStep,
 }) => {
   const [isVerify, setIsVerify] = useState(null);
+  const [isConsent, setIsConsent] = useState(null);
   const audioRef = useRef(null);
 
   useEffect(() => {
@@ -39,17 +40,36 @@ const TTS = ({
         !formdata.email ||
         !formdata.endUse
         ? 2
+        : formdata.firstName ||
+          formdata.lastName ||
+          formdata.dob ||
+          formdata.contactNumber ||
+          formdata.pan ||
+          formdata.pincode ||
+          formdata.city ||
+          formdata.state ||
+          formdata.gender ||
+          formdata.addressL1 ||
+          formdata.addressL2 ||
+          formdata.email ||
+          formdata.endUse
+        ? 3
         : step;
-    } else if (step === 3 && (isVerify === false || isVerify === null)) {
-      return 2;
+    } else if (step === 4 && (isVerify === false || isVerify === null)) {
+      return 3;
     } else if (formdata && step === 4) {
-      return !formdata.companyName ||
-        !formdata.officialEmail ||
-        !formdata.employmentType ||
-        !formdata.income ||
-        !formdata.udyamNumber
-        ? 4
-        : step;
+      return (
+        //proffesional details
+        !formdata.companyName ||
+          !formdata.officialEmail ||
+          !formdata.employmentType ||
+          !formdata.income ||
+          !formdata.udyamNumber
+          ? 4
+          : step
+      );
+    } else if (step === 6 && (isConsent === false || isConsent === null)) {
+      return 5;
     } else {
       return step;
     }
@@ -71,6 +91,7 @@ const TTS = ({
       const res = JSON.parse(response?.data);
       console.log(res);
       setIsVerify(res?.isVerify);
+      setIsConsent(res?.isConsent);
       if (res?.formdata) {
         setFormData((prevFormData) => ({
           ...prevFormData,
@@ -78,7 +99,7 @@ const TTS = ({
         }));
       }
 
-      if (res?.isFilled === true || res?.isFilled === null) {
+      if (res?.isFilled === true || (step === 1 && res?.isFilled === null)) {
         setStep(res?.step + 1);
       }
       const audioBlob = base64ToBlob(res?.data, "audio/wav");

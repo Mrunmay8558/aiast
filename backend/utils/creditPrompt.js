@@ -87,7 +87,7 @@ Structure the JSON response as follows:
   "isFilled": true or false, // true if all required fields are filled based on the user's input, false if any required fields are missing, or null if no verification is required in the current step
   "formData": {
     "companyName": "",       // Populate with the user's input or retain the previous value if not updated
-    "officeEmail": "",       // Populate with the user's input or retain the previous value if not updated
+    "officialEmail": "",       // Populate with the user's input or retain the previous value if not updated
     "employmentType": "",    // Populate with the user's input or retain the previous value if not updated
     "income": "",            // Populate with the user's input or retain the previous value if not updated
     "udyamNumber": ""        // Populate with the user's input or retain the previous value if not updated
@@ -130,7 +130,7 @@ Structure the JSON response as follows:
   "isFilled": true or false, // true if all required fields are filled based on the user's input, false if any required fields are missing, or null if no verification is required in the current step
   "formData": {
     "companyName": "",       // Populate with the user's input or retain the previous value if not updated
-    "officeEmail": "",       // Populate with the user's input or retain the previous value if not updated
+    "officialEmail": "",       // Populate with the user's input or retain the previous value if not updated
     "employmentType": "",    // Populate with the user's input or retain the previous value if not updated
     "income": "",            // Populate with the user's input or retain the previous value if not updated
     "udyamNumber": ""        // Populate with the user's input or retain the previous value if not updated

@@ -161,6 +161,7 @@ export const prompt5 = `
   `;
 
 export const prompt6 = `
+IF user formData is already have isConsent = true then Direct ask Step 2: Submission Confirmation
 **Step 1: Consent**
 - Request the user to give consent to the terms and conditions for processing their data:
   - If the user agrees, set "isConsent" to **true**.

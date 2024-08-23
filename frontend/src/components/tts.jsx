@@ -18,10 +18,39 @@ const TTS = ({
   const [isSubmit, setIsSubmit] = useState(null);
   const audioRef = useRef(null);
 
+  const handleTXNDispatchCall = async () => {
+    try {
+      const res = await axios.post(
+        `https://staging.cliniq360.com/v1/credit/search?user_id=2`
+      );
+      sessionStorage.setItem("txnId", res?.data?.txn_id);
+    } catch (error) {
+      console.error("Error:", error);
+    }
+  };
+
+  const handleSubmitForm = async () => {
+    try {
+      const txnID = sessionStorage.getItem("txnId");
+      const res = await axios.post(
+        `https://staging.cliniq360.com/v1/credit/submitForm?txn_id=${txnID}`,
+        {
+          loanForm: { ...formdata },
+        }
+      );
+      console.log(res);
+    } catch (error) {
+      console.error("Error:", error);
+    }
+  };
+
   useEffect(() => {
     if (submit) {
       handleSendText(transcriptionText);
       setSubmit(false);
+      if (step === 1) {
+        handleTXNDispatchCall();
+      }
     }
   }, [submit]);
 
@@ -103,11 +132,21 @@ const TTS = ({
       setIsSubmit(res?.isSubmit);
       setIsVerify(res?.isVerify);
       setIsConsent(res?.isConsent);
+      if (res?.isConsent) {
+        setFormData((prevFormData) => ({
+          ...prevFormData,
+          bureauConsent: res?.isConsent,
+        }));
+      }
       if (res?.formdata) {
         setFormData((prevFormData) => ({
           ...prevFormData,
           ...res.formdata,
         }));
+      }
+
+      if (res?.isSubmit === true) {
+        handleSubmitForm();
       }
 
       if (res?.isFilled === true || (step === 1 && res?.isFilled === null)) {

@@ -44,6 +44,7 @@ export const prompt3 = `
   Based on the user's form data, confirm whether all required fields have been filled out. If any required fields are missing, prompt the user to provide the missing information. Once all fields are complete, ask the user to confirm their information by responding with "yes" or "no" for verification. If the user says "yes" to verify, ask them to fill out the Work Details Form.
   
   If the user responds with "yes," set "isVerify" to true. If the user responds with "no," set "isVerify" to false.
+ ** please as user to verify and then only return true in isVerify or false as default.**
   
   Respond in JSON format with the following details:
   {

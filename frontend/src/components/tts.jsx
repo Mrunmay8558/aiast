@@ -40,7 +40,7 @@ const TTS = ({
         !formdata.endUse
         ? 2
         : step;
-    } else if (step === 3 && (isVerify === false || isVerify === null)) {
+    } else if (step === 3 && isVerify === false) {
       return 2;
     } else if (formdata && step === 4) {
       return !formdata.companyName ||

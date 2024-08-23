@@ -42,7 +42,17 @@ export const audioToTextController = async (req, res, next) => {
 export const voicebotController = async (req, res, next) => {
   try {
     const { transcribedText, step } = req.body;
-
+    let payload = {};
+    if (step == 4 || step == 5) {
+      payload = {
+        companyName: transcribedText.formdata.companyName,
+        officialEmail: transcribedText.formdata.officialEmail,
+        employmentType: transcribedText.formdata.employmentType,
+        income: transcribedText.formdata.income,
+        udyamNumber: transcribedText.formdata.udyamNumber,
+      };
+    }
+    console.log(payload);
     const completion = await groq.chat.completions.create({
       messages: [
         {
@@ -57,11 +67,9 @@ export const voicebotController = async (req, res, next) => {
               ? JSON.stringify(transcribedText.formdata) +
                 transcribedText.message
               : step === 4
-              ? JSON.stringify(transcribedText.formData) +
-                transcribedText.message
+              ? JSON.stringify(payload) + transcribedText.message
               : step === 5
-              ? JSON.stringify(transcribedText.formData) +
-                transcribedText.message
+              ? JSON.stringify(payload) + transcribedText.message
               : "hey",
         },
         {

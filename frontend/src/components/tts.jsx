@@ -15,6 +15,7 @@ const TTS = ({
 }) => {
   const [isVerify, setIsVerify] = useState(null);
   const [isConsent, setIsConsent] = useState(null);
+  const [isSubmit, setIsSubmit] = useState(null);
   const audioRef = useRef(null);
 
   useEffect(() => {
@@ -68,8 +69,13 @@ const TTS = ({
           ? 4
           : step
       );
-    } else if (step === 6 && (isConsent === false || isConsent === null)) {
+    }
+    // else if (step === 5 && (isVerify === false || isVerify === null)) {
+    //   return 4;}
+    else if (step === 6 && (isVerify === false || isVerify === null)) {
       return 5;
+    } else if (step === 6 && isSubmit === false) {
+      return;
     } else {
       return step;
     }
@@ -90,6 +96,7 @@ const TTS = ({
 
       const res = JSON.parse(response?.data);
       console.log(res);
+      setIsSubmit(res?.isSubmit);
       setIsVerify(res?.isVerify);
       setIsConsent(res?.isConsent);
       if (res?.formdata) {

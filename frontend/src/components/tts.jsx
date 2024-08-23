@@ -88,7 +88,11 @@ const TTS = ({
       const response = await axios.post(
         `${BaseURL}v1/get-audio-file`,
         {
-          transcribedText: { message: text, formdata: formdata },
+          transcribedText: {
+            message: text,
+            formdata: formdata,
+            isConsent: isConsent,
+          },
           step: checkStep(),
         },
         { responseType: "text" }

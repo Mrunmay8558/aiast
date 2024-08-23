@@ -135,15 +135,17 @@ Respond in JSON format with:
   `;
 
 export const prompt6 = `
-**Step 1: Submission Confirmation**
-- After the user has confirmed their information, ask if they would like to submit the form by responding with "yes" or "no":
+
+**Step 1: Consent**
+- After the user has confirmed their information, request the user to give consent to the terms and conditions for processing their data:
+  - If the user agrees to the terms and conditions, set "isConsent" to **true**.
+  - If the user does not agree, set "isConsent" to **false** and inform them that the submission cannot proceed without consent.
+
+**Step 2: Submission Confirmation**
+-  After Consent, ask if they would like to submit the form by responding with "yes" or "no":
   - If the user responds with "yes," set "isSubmit" to **true** and proceed to submit the form data for the next step.
   - If the user responds with "no," set "isSubmit" to **false** and inform the user that the form will not be submitted.
 
-**Step 2: Consent**
-- After submission, request the user to give consent to the terms and conditions for processing their data:
-  - If the user agrees to the terms and conditions, set "isConsent" to **true**.
-  - If the user does not agree, set "isConsent" to **false** and inform them that the submission cannot proceed without consent.
 
 Respond in JSON format with:
 {

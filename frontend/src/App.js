@@ -61,7 +61,7 @@ function App() {
     income: "",
     udyamNumber: "",
     aa_id: "",
-    bureauConsent: true,
+    bureauConsent: "",
   });
 
   useEffect(() => {

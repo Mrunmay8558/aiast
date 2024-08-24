@@ -8,6 +8,7 @@ import {
   prompt3,
   prompt4,
   prompt5,
+  prompt6,
 } from "../utils/creditPrompt.js";
 import Transcription from "../model/transcribedText.model.js";
 dotenv.config();
@@ -42,7 +43,17 @@ export const audioToTextController = async (req, res, next) => {
 export const voicebotController = async (req, res, next) => {
   try {
     const { transcribedText, step } = req.body;
-
+    let payload = {};
+    if (step == 4 || step == 5) {
+      payload = {
+        companyName: transcribedText.formdata.companyName,
+        officialEmail: transcribedText.formdata.officialEmail,
+        employmentType: transcribedText.formdata.employmentType,
+        income: transcribedText.formdata.income,
+        udyamNumber: transcribedText.formdata.udyamNumber,
+      };
+    }
+    console.log(payload);
     const completion = await groq.chat.completions.create({
       messages: [
         {
@@ -57,10 +68,11 @@ export const voicebotController = async (req, res, next) => {
               ? JSON.stringify(transcribedText.formdata) +
                 transcribedText.message
               : step === 4
-              ? JSON.stringify(transcribedText.formData) +
-                transcribedText.message
+              ? JSON.stringify(payload) + transcribedText.message
               : step === 5
-              ? JSON.stringify(transcribedText.formData) +
+              ? JSON.stringify(payload) + transcribedText.message
+              : step === 6
+              ? JSON.stringify(transcribedText.payload) +
                 transcribedText.message
               : "hey",
         },
@@ -80,6 +92,8 @@ export const voicebotController = async (req, res, next) => {
                            ? prompt4
                            : step === 5
                            ? prompt5
+                           : step === 6
+                           ? prompt6
                            : "hey"
                        }
                   `,
@@ -126,6 +140,8 @@ export const voicebotController = async (req, res, next) => {
         ttsData: parsedObject?.ttsData,
         isFilled: parsedObject?.isFilled,
         isVerify: parsedObject?.isVerify,
+        isSubmit: parsedObject?.isSubmit,
+        isConsent: parsedObject?.isConsent,
       });
     } else {
       res.status(500).json({ success: false, error: "Error generating audio" });

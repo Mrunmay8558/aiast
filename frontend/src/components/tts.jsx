@@ -14,12 +14,43 @@ const TTS = ({
   setStep,
 }) => {
   const [isVerify, setIsVerify] = useState(null);
+  const [isConsent, setIsConsent] = useState(null);
+  const [isSubmit, setIsSubmit] = useState(null);
   const audioRef = useRef(null);
+
+  const handleTXNDispatchCall = async () => {
+    try {
+      const res = await axios.post(
+        `https://staging.cliniq360.com/v1/credit/search?user_id=2`
+      );
+      sessionStorage.setItem("txnId", res?.data?.txn_id);
+    } catch (error) {
+      console.error("Error:", error);
+    }
+  };
+
+  const handleSubmitForm = async () => {
+    try {
+      const txnID = sessionStorage.getItem("txnId");
+      const res = await axios.post(
+        `https://staging.cliniq360.com/v1/credit/submitForm?txn_id=${txnID}`,
+        {
+          loanForm: { ...formdata },
+        }
+      );
+      console.log(res);
+    } catch (error) {
+      console.error("Error:", error);
+    }
+  };
 
   useEffect(() => {
     if (submit) {
       handleSendText(transcriptionText);
       setSubmit(false);
+      if (step === 1) {
+        handleTXNDispatchCall();
+      }
     }
   }, [submit]);
 
@@ -39,17 +70,41 @@ const TTS = ({
         !formdata.email ||
         !formdata.endUse
         ? 2
+        : formdata.firstName ||
+          formdata.lastName ||
+          formdata.dob ||
+          formdata.contactNumber ||
+          formdata.pan ||
+          formdata.pincode ||
+          formdata.city ||
+          formdata.state ||
+          formdata.gender ||
+          formdata.addressL1 ||
+          formdata.addressL2 ||
+          formdata.email ||
+          formdata.endUse
+        ? 3
         : step;
-    } else if (step === 3 && isVerify === false) {
-      return 2;
+    } else if (step === 4 && (isVerify === false || isVerify === null)) {
+      return 3;
     } else if (formdata && step === 4) {
-      return !formdata.companyName ||
-        !formdata.officialEmail ||
-        !formdata.employmentType ||
-        !formdata.income ||
-        !formdata.udyamNumber
-        ? 4
-        : step;
+      return (
+        //proffesional details
+        !formdata.companyName ||
+          !formdata.officialEmail ||
+          !formdata.employmentType ||
+          !formdata.income ||
+          !formdata.udyamNumber
+          ? 4
+          : step
+      );
+    }
+    // else if (step === 5 && (isVerify === false || isVerify === null)) {
+    //   return 4;}
+    else if (step === 6 && (isVerify === false || isVerify === null)) {
+      return 5;
+    } else if (step === 6 && isConsent === true && isSubmit === false) {
+      return 1;
     } else {
       return step;
     }
@@ -62,7 +117,11 @@ const TTS = ({
       const response = await axios.post(
         `${BaseURL}v1/get-audio-file`,
         {
-          transcribedText: { message: text, formdata: formdata },
+          transcribedText: {
+            message: text,
+            formdata: formdata,
+            isConsent: isConsent,
+          },
           step: checkStep(),
         },
         { responseType: "text" }
@@ -70,7 +129,15 @@ const TTS = ({
 
       const res = JSON.parse(response?.data);
       console.log(res);
+      setIsSubmit(res?.isSubmit);
       setIsVerify(res?.isVerify);
+      setIsConsent(res?.isConsent);
+      if (res?.isConsent) {
+        setFormData((prevFormData) => ({
+          ...prevFormData,
+          bureauConsent: res?.isConsent,
+        }));
+      }
       if (res?.formdata) {
         setFormData((prevFormData) => ({
           ...prevFormData,
@@ -78,7 +145,11 @@ const TTS = ({
         }));
       }
 
-      if (res?.isFilled === true || res?.isFilled === null) {
+      if (res?.isSubmit === true) {
+        handleSubmitForm();
+      }
+
+      if (res?.isFilled === true || (step === 1 && res?.isFilled === null)) {
         setStep(res?.step + 1);
       }
       const audioBlob = base64ToBlob(res?.data, "audio/wav");

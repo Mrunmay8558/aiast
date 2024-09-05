@@ -47,4 +47,4 @@ const api = {
   },
 };
 
-export { socket, api };
+export { api };

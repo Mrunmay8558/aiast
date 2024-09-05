@@ -1,8 +1,8 @@
 import io from "socket.io-client";
 import axios from "axios";
 
-// Create a socket connection
-const socket = io("http://your-backend-url");
+// // Create a socket connection
+// const socket = io("http://your-backend-url");
 
 // Create a custom component for API calls
 const api = {

@@ -106,7 +106,7 @@ function App() {
           addChat={addChat}
           setSubmit={setSubmit}
         />
-        <TTS
+        {/* <TTS
           transcriptionText={transcriptionText}
           addURL={addAudioUrl}
           formdata={formData}
@@ -115,7 +115,7 @@ function App() {
           setStep={setStep}
           submit={submit}
           setSubmit={setSubmit}
-        />
+        /> */}
       </div>
       <div style={formContainerStyle}>
         <Form

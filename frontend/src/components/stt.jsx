@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import axios from "axios";
+import { api } from "../config/socket";
 
 const BaseURL = "http://localhost:8000/";
 
@@ -92,18 +93,16 @@ const STT = ({ setTranscriptionText, addChat, setSubmit }) => {
         const formData = new FormData();
         formData.append("audioFile", audioFile);
 
-        const response = await axios.post(
-          `${BaseURL}v1/transcribe-audio`,
-          formData,
-          {
-            headers: {
-              "Content-Type": "multipart/form-data",
-            },
-          }
-        );
-
-        const res = response.data;
-        console.log("Transcription response:", res);
+        // const response = await axios.post(
+        //   `${BaseURL}v1/transcribe-audio`,
+        //   formData,
+        //   {
+        //     headers: {
+        //       "Content-Type": "multipart/form-data",
+        //     },
+        //   }
+        // );
+        const res = await api.post(`${BaseURL}v1/transcribe-audio`, formData);
 
         const transcriptionText = res.transcribedText;
         setTranscriptionText(transcriptionText);

@@ -13,6 +13,10 @@
   "description": "",
   "dependencies": {
     "@deepgram/sdk": "^3.5.1",
+    "@langchain/community": "^0.2.33",
+    "@langchain/core": "^0.2.32",
+    "@langchain/langgraph": "^0.2.2",
+    "@langchain/openai": "^0.2.10",
     "assemblyai": "^4.6.1",
     "axios": "^1.7.4",
     "cors": "^2.8.5",

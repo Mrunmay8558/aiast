@@ -4,7 +4,7 @@ import { api, socket } from "../config/socket";
 
 const BaseURL = "http://localhost:8000/";
 
-const STT = ({ setTranscriptionText, addChat, setSubmit }) => {
+const STT = ({ setTranscriptionText, addChat, setSubmit, addAudioUrl }) => {
   const [recording, setRecording] = useState(false);
   const mediaRecorderRef = useRef(null);
   const audioChunks = useRef([]);
@@ -84,34 +84,32 @@ const STT = ({ setTranscriptionText, addChat, setSubmit }) => {
     }
   };
 
-  const sttPost = async (audioBlob) => {
-    if (audioBlob && audioBlob?.size > 0) {
-      const audioFile = new File([audioBlob], "recording.wav", {
-        type: "audio/wav",
-      });
-      try {
-        const formData = new FormData();
-        formData.append("audioFile", audioFile);
+  const sttPost = (audioBlob) => {
+    if (audioBlob && audioBlob.size > 0) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const arrayBuffer = reader.result;
+        socket.emit("upload_audio", arrayBuffer);
 
-        // const response = await axios.post(
-        //   `${BaseURL}v1/transcribe-audio`,
-        //   formData,
-        //   {
-        //     headers: {
-        //       "Content-Type": "multipart/form-data",
-        //     },
-        //   }
-        // );
-        // const res = await api.post(`${BaseURL}v1/transcribe-audio`, formData);
-        const res = socket.emit("transcribe-audio", "Hello! how are you?");
+        socket.on("transcribed_text", (data) => {
+          console.log("Generated Response:", data.response);
 
-        const transcriptionText = res.transcribedText;
-        setTranscriptionText(transcriptionText);
-        addChat(transcriptionText);
-        setSubmit(true);
-      } catch (error) {
-        console.error("Error during transcription:", error);
-      }
+          const transcriptionText = data.response;
+          setTranscriptionText(transcriptionText);
+          addChat(transcriptionText);
+          setSubmit(true);
+        });
+
+        socket.on("response_generated", (data) => {
+          console.log("Generated Response:", data.genratedResponse);
+          addAudioUrl(data.genratedResponse);
+        });
+
+        socket.on("error", (error) => {
+          console.error("Error:", error);
+        });
+      };
+      reader.readAsArrayBuffer(audioBlob);
     } else {
       console.error("AudioBlob is empty or null");
     }

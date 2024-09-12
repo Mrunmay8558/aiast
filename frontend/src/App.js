@@ -85,10 +85,10 @@ function App() {
     ]);
   };
 
-  const addAudioUrl = (audioUrl, message) => {
+  const addAudioUrl = (message) => {
     setUserChats((prevChats) => [
       ...prevChats,
-      { sender: "Bot", url: audioUrl, message: message },
+      { sender: "Bot", message: message },
     ]);
   };
 
@@ -104,6 +104,7 @@ function App() {
           transcriptionText={transcriptionText}
           setTranscriptionText={setTranscriptionText}
           addChat={addChat}
+          addAudioUrl={addAudioUrl}
           setSubmit={setSubmit}
         />
         {/* <TTS

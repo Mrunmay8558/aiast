@@ -84,7 +84,6 @@ const ChatHistory = ({ chats, setFormData, setStep }) => {
                 >
                   {chat.message}
                 </span>
-                <audio src={chat.url} autoPlay={true} controls />
               </div>
             )}
           </React.Fragment>

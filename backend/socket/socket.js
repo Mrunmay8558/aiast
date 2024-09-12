@@ -9,6 +9,7 @@ import { HumanMessage } from "@langchain/core/messages";
 import axios from "axios";
 import FormData from "form-data";
 import { Buffer } from "buffer";
+import { userInfo } from "os";
 
 const app = express();
 const server = http.createServer(app);
@@ -23,7 +24,11 @@ if (!OPENAI_API_KEY || !WHISPER_API_KEY) {
 }
 
 const agentTools = [new TavilySearchResults({ maxResults: 3 })];
-const agentModel = new ChatOpenAI({ temperature: 0, apiKey: OPENAI_API_KEY });
+const agentModel = new ChatOpenAI({
+  temperature: 0,
+  apiKey: OPENAI_API_KEY,
+  verbose: true,
+});
 const agentCheckpointer = new MemorySaver();
 
 const agent = createReactAgent({
@@ -72,15 +77,47 @@ io.on("connection", (socket) => {
       socket.emit("transcribed_text", {
         response: text,
       });
-      // Generate a response using LangGraph agent
+
+      // Generate a response using LangGraph agent, asking for JSON format
+      const prompt = `
+      Extract the relevant user information from the following text: "${text}". 
+      Only return a valid JSON object in this exact format:
+      {
+        "message": "string",
+        "data": {
+          "firstName": "string",
+          "lastName": "string",
+          "dob": "string",
+          "contactNumber": "string",
+          "pan": "string",
+          "pincode": "string",
+          "city": "string",
+          "state": "string",
+          "email": "string",
+          "gender": "string",
+          "addressL1": "string",
+          "addressL2": "string",
+          "endUse": "string",
+          "companyName": "string",
+          "officialEmail": "string",
+          "employmentType": "string",
+          "income": "string",
+          "udyamNumber": "string",
+          "aa_id": "string",
+          "bureauConsent": "string"
+        }
+      }
+      Ensure the response only contains the JSON object without any extra text or explanations.
+    `;
+
       const agentResponse = await agent.invoke(
-        { messages: [new HumanMessage(text)] },
+        { messages: [new HumanMessage(prompt)] },
         { configurable: { thread_id: socket.id } }
       );
 
       // Send the generated response back to the client
       socket.emit("response_generated", {
-        genratedResponse:
+        response:
           agentResponse.messages[agentResponse.messages.length - 1].content,
       });
     } catch (error) {

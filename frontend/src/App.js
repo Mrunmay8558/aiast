@@ -106,6 +106,7 @@ function App() {
           addChat={addChat}
           addAudioUrl={addAudioUrl}
           setSubmit={setSubmit}
+          setFormData={setFormData}
         />
         {/* <TTS
           transcriptionText={transcriptionText}

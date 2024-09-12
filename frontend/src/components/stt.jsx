@@ -4,7 +4,13 @@ import { api, socket } from "../config/socket";
 
 const BaseURL = "http://localhost:8000/";
 
-const STT = ({ setTranscriptionText, addChat, setSubmit, addAudioUrl }) => {
+const STT = ({
+  setTranscriptionText,
+  addChat,
+  setSubmit,
+  addAudioUrl,
+  setFormData,
+}) => {
   const [recording, setRecording] = useState(false);
   const mediaRecorderRef = useRef(null);
   const audioChunks = useRef([]);
@@ -101,8 +107,9 @@ const STT = ({ setTranscriptionText, addChat, setSubmit, addAudioUrl }) => {
         });
 
         socket.on("response_generated", (data) => {
-          console.log("Generated Response:", data.genratedResponse);
-          addAudioUrl(data.genratedResponse);
+          console.log("Generated Response:", JSON.parse(data.response));
+          addAudioUrl(JSON.parse(data.response)?.message);
+          setFormData(JSON.parse(data.response)?.data);
         });
 
         socket.on("error", (error) => {

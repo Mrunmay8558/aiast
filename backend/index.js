@@ -4,6 +4,7 @@ import fetchImageRoute from "./routes/fetchimage.route.js";
 import dotenv from "dotenv";
 import aivoicebotRoute from "./routes/aiassistantvoicebot.route.js";
 import mongoose from "mongoose";
+import { app, server } from "./socket/socket.js";
 
 mongoose
   .connect(process.env.MONGO_URL)
@@ -15,7 +16,6 @@ mongoose
   });
 
 dotenv.config();
-const app = express();
 
 app.use(cors());
 app.use(express.json());
@@ -27,7 +27,7 @@ app.use("/v1", fetchImageRoute);
 /* ROUTES OF AI BOT */
 app.use("/v1", aivoicebotRoute);
 
-app.listen(8000, () => {
+server.listen(8001, () => {
   console.log("Server is Listening");
 });
 

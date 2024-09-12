@@ -15,6 +15,7 @@ const server = http.createServer(app);
 const io = new SocketIOServer(server, { cors: { origin: "*" } });
 
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
+const TAVILY_API_KEY = process.env.TAVILY_API_KEY;
 const WHISPER_API_KEY = process.env.GROQ_API_KEY;
 
 if (!OPENAI_API_KEY || !WHISPER_API_KEY) {

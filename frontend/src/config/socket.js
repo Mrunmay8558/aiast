@@ -2,7 +2,7 @@ import io from "socket.io-client";
 import axios from "axios";
 
 // // Create a socket connection
-// const socket = io("http://your-backend-url");
+const socket = io("http://localhost:8001");
 
 // Create a custom component for API calls
 const api = {
@@ -47,4 +47,4 @@ const api = {
   },
 };
 
-export { api };
+export { socket, api };

@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import axios from "axios";
-import { api } from "../config/socket";
+import { api, socket } from "../config/socket";
 
 const BaseURL = "http://localhost:8000/";
 
@@ -102,7 +102,8 @@ const STT = ({ setTranscriptionText, addChat, setSubmit }) => {
         //     },
         //   }
         // );
-        const res = await api.post(`${BaseURL}v1/transcribe-audio`, formData);
+        // const res = await api.post(`${BaseURL}v1/transcribe-audio`, formData);
+        const res = socket.emit("transcribe-audio", "Hello! how are you?");
 
         const transcriptionText = res.transcribedText;
         setTranscriptionText(transcriptionText);

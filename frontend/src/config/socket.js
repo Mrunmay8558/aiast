@@ -1,50 +1,47 @@
-import io from "socket.io-client";
-import axios from "axios";
+import { useContext, useEffect } from "react";
+import { TranscriptionContext } from "../context/context";
 
-// // Create a socket connection
-const socket = io("http://localhost:8001");
+const useWebSocket = (url) => {
+  const { setTranscriptionText } = useContext(TranscriptionContext);
 
-// Create a custom component for API calls
-// const api = {
-//   // Function to make a GET request
-//   get: async (url, params) => {
-//     try {
-//       const response = await axios.get(url, { params });
-//       return response.data;
-//     } catch (error) {
-//       throw new Error(error.message);
-//     }
-//   },
+  useEffect(() => {
+    const ws = new WebSocket(url);
 
-//   // Function to make a POST request
-//   post: async (url, data) => {
-//     try {
-//       const response = await axios.post(url, data);
-//       return response.data;
-//     } catch (error) {
-//       throw new Error(error.message);
-//     }
-//   },
+    ws.onopen = () => {
+      console.log("Connected to WebSocket server");
 
-//   // Function to make a PUT request
-//   put: async (url, data) => {
-//     try {
-//       const response = await axios.put(url, data);
-//       return response.data;
-//     } catch (error) {
-//       throw new Error(error.message);
-//     }
-//   },
+      // Example: Send audio data
+      navigator.mediaDevices.getUserMedia({ audio: true }).then((stream) => {
+        const mediaRecorder = new MediaRecorder(stream);
 
-//   // Function to make a DELETE request
-//   delete: async (url) => {
-//     try {
-//       const response = await axios.delete(url);
-//       return response.data;
-//     } catch (error) {
-//       throw new Error(error.message);
-//     }
-//   },
-// };
+        mediaRecorder.ondataavailable = (event) => {
+          if (ws.readyState === WebSocket.OPEN) {
+            ws.send(event.data);
+          }
+        };
 
-export { socket };
+        mediaRecorder.start(1000); // Send audio chunks every second
+      });
+    };
+
+    ws.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      if (data.success) {
+        console.log("LLM Response:", data.response);
+        setTranscriptionText(data.response);
+      } else {
+        console.error("Error:", data.error);
+      }
+    };
+
+    ws.onclose = () => {
+      console.log("WebSocket connection closed");
+    };
+
+    return () => {
+      ws.close();
+    };
+  }, [url, setTranscriptionText]);
+};
+
+export default useWebSocket;

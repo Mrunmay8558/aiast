@@ -5,7 +5,7 @@ import { Completions } from "openai/resources/completions.mjs";
 
 dotenv.config();
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API });
+// const openai = new OpenAI({ apiKey: process.env.OPENAI_API });
 
 export const fetchImageController = async (req, res, next) => {
   try {

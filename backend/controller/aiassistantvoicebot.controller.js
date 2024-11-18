@@ -15,7 +15,7 @@ dotenv.config();
 
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
-const deepgram = createClient(process.env.DEEPGRAM_API);
+// const deepgram = createClient(process.env.DEEPGRAM_API);
 
 export const audioToTextController = async (req, res, next) => {
   try {

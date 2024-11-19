@@ -93,7 +93,9 @@ async function processAudioBuffer(buffer, ws, sttProvider, ttsProvider) {
     } else if (sttProvider === "Deepgram") {
       const transcriptionResponse = await axios.post(
         "https://api.deepgram.com/v1/listen?model=nova-2&smart_format=true",
-        { url: `data:audio/wav;base64,${base64Audio}` },
+        {
+          audio: base64Audio, // Pass the raw base64 audio directly as part of the "audio" field.
+        },
         {
           headers: {
             Authorization: `Token ${process.env.DEEPGRAM_API_KEY}`,
@@ -101,6 +103,7 @@ async function processAudioBuffer(buffer, ws, sttProvider, ttsProvider) {
           },
         }
       );
+
       transcribedText =
         transcriptionResponse.data?.results?.channels[0]?.alternatives[0]
           ?.transcript;

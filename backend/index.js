@@ -3,90 +3,62 @@ import { WebSocketServer } from "ws";
 import { createServer } from "http";
 import dotenv from "dotenv";
 import Groq from "groq-sdk";
+import fs from "fs";
+import { Readable } from "stream";
+import axios from "axios"; // Use axios for HTTP requests
+import FormData from "form-data"; // Import FormData for handling multipart data
+import { prompt1 } from "./utils/creditPrompt.js";
 
 dotenv.config();
 
+// Validate environment variables
 if (!process.env.GROQ_API_KEY) {
-  console.error(
-    "Missing API key. Ensure GROQ_API_KEY is set in your .env file."
-  );
+  console.error("Missing GROQ_API_KEY in .env file. Please add it.");
   process.exit(1);
 }
 
 const app = express();
 const server = createServer(app);
 const wsServer = new WebSocketServer({ noServer: true });
-
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
-// WebSocket Error Handler
-function onSocketPreError(err) {
+// WebSocket error handler
+function handleSocketError(err) {
   console.error("Socket error:", err);
 }
 
-// Handle HTTP Upgrade to WebSocket
+// Upgrade HTTP connection to WebSocket
 server.on("upgrade", (req, socket, head) => {
-  socket.on("error", onSocketPreError);
+  socket.on("error", handleSocketError);
   wsServer.handleUpgrade(req, socket, head, (ws) => {
-    socket.removeListener("error", onSocketPreError);
+    socket.removeListener("error", handleSocketError);
     wsServer.emit("connection", ws, req);
   });
 });
 
-// Handle WebSocket Connections
-wsServer.on("connection", (ws, req) => {
+// WebSocket connection handler
+wsServer.on("connection", (ws) => {
   console.log("Client connected");
 
-  ws.on("error", onSocketPreError);
+  ws.on("error", handleSocketError);
 
-  ws.on("message", async (msg, isBinary) => {
+  let audioBuffer = Buffer.alloc(0);
+
+  ws.on("message", async (msg) => {
+    console.log("Received audio data from client");
     try {
-      console.log("Received audio data from client");
+      // Append received audio data
 
-      // Assuming msg is a buffer containing audio data
-      const audioBuffer = Buffer.from(msg);
+      // Check if buffer exceeds the maximum size
 
-      // Transcribe the audio buffer using Groq Whisper API
-      const transcriptionResponse = await groq.audio.transcriptions.create({
-        audio: audioBuffer,
-        model: "whisper-1", // Ensure this is the correct Whisper model
-        format: "json",
-      });
-
-      const transcribedText = transcriptionResponse?.text;
-      if (!transcribedText) {
-        throw new Error("Transcription failed or returned empty text.");
+      if (msg) {
+        console.log("Processing buffered audio data");
+        await processAudioBuffer(msg, ws);
+        audioBuffer = Buffer.alloc(0); // Reset buffer after processing
       }
-
-      console.log("Transcribed Text:", transcribedText);
-
-      // Process transcription through the Groq language model
-      const completion = await groq.chat.completions.create({
-        messages: [
-          { role: "user", content: transcribedText },
-          {
-            role: "system",
-            content: "Respond in JSON format with required details.",
-          },
-        ],
-        model: "llama3-70b-8192", // Specify the desired Groq model
-        response_format: { type: "json_object" },
-      });
-
-      const chatCompletion = completion.choices[0]?.message?.content || "{}";
-      console.log("LLM Response:", chatCompletion);
-
-      let parsedResponse;
-      try {
-        parsedResponse = JSON.parse(chatCompletion);
-      } catch (err) {
-        throw new Error("Failed to parse LLM response: " + chatCompletion);
-      }
-
-      // Send JSON response back to the client
-      ws.send(JSON.stringify({ success: true, data: parsedResponse }));
     } catch (error) {
-      console.error("Error processing audio or LLM response:", error);
+      console.error("Error processing message:", error);
+
       ws.send(JSON.stringify({ success: false, error: error.message }));
     }
   });
@@ -96,6 +68,80 @@ wsServer.on("connection", (ws, req) => {
   });
 });
 
+// Process audio buffer
+
+async function processAudioBuffer(buffer, ws) {
+  try {
+    console.log("Processing audio buffer...");
+
+    // Ensure the buffer is not empty
+    if (!buffer || buffer.length === 0) {
+      throw new Error("Received empty audio buffer.");
+    }
+
+    // Convert buffer to readable stream
+    const audioStream = new Readable();
+    audioStream.push(buffer); // Push buffer into stream
+    audioStream.push(null); // Signal end of stream
+
+    const debugFile = "debug_audio.wav";
+    fs.writeFileSync(debugFile, buffer);
+
+    // Prepare form data to send the audio stream
+    const formData = new FormData();
+    formData.append("file", audioStream, "audio.wav"); // Pass only name, not an options object
+    formData.append("model", "distil-whisper-large-v3-en");
+    formData.append("response_format", "verbose_json");
+
+    const transcriptionResponse = await axios.post(
+      "https://api.groq.com/openai/v1/audio/transcriptions",
+      formData,
+      {
+        headers: {
+          Authorization: `Bearer ${process.env.GROQ_API_KEY}`,
+          "Content-Type": "multipart/form-data",
+        },
+      }
+    );
+    console.log("Transcription successful:", transcriptionResponse?.data?.text);
+
+    const transcribedText = transcriptionResponse.data?.text;
+    if (!transcribedText) {
+      throw new Error("Transcription failed or returned empty text.");
+    }
+
+    const completionResponse = await groq.chat.completions.create({
+      messages: [
+        { role: "user", content: transcribedText },
+        {
+          role: "system",
+          content: prompt1,
+        },
+      ],
+      model: "llama3-70b-8192",
+      response_format: { type: "json_object" },
+    });
+
+    const completionText =
+      completionResponse.choices[0]?.message?.content || "{}";
+    console.log("LLM Response:", completionText);
+
+    let parsedResponse;
+    try {
+      parsedResponse = JSON.parse(completionText);
+    } catch (error) {
+      throw new Error("Failed to parse LLM response: " + completionText);
+    }
+
+    // Send the parsed response back to the client
+    ws.send(JSON.stringify({ success: true, data: parsedResponse }));
+  } catch (error) {
+    console.error("Error processing audio buffer:", error.message);
+    ws.send(JSON.stringify({ success: false, error: error.message }));
+  }
+}
+
+// Start the server
 const PORT = process.env.PORT || 8000;
 server.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);

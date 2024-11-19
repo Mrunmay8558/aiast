@@ -6,7 +6,7 @@ const chatStyles = {
   flexDirection: "column",
   justifyContent: "flex-start",
   alignItems: "flex-start",
-  height: "85%",
+  height: "500px",
   width: "90%",
   overflowY: "auto", // Improved for scrolling behavior
   padding: "15px",
@@ -20,6 +20,7 @@ const chatStyles = {
   lineHeight: "1.6",
   scrollbarWidth: "thin",
   scrollbarColor: "#ccc transparent",
+  marginBottom: "20px",
 };
 
 // To further customize the scrollbar (works for Webkit-based browsers):

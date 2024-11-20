@@ -3,7 +3,8 @@ import { TranscriptionContext } from "../context/context";
 import testAudio from "../asset/testAudio.mp3";
 
 const useWebSocket = (url) => {
-  const { setTranscriptionText } = useContext(TranscriptionContext);
+  const { setTranscriptionText, ttsProvider, sttProvider } =
+    useContext(TranscriptionContext);
   const wsRef = useRef(null); // Persist WebSocket across renders
   const mediaRecorderRef = useRef(null); // Store MediaRecorder instance
 
@@ -26,6 +27,7 @@ const useWebSocket = (url) => {
       return arrayBufferToBase64(arrayBuffer);
     } catch (error) {
       console.error("Error converting file to Base64:", error);
+
       throw error;
     }
   };
@@ -37,8 +39,8 @@ const useWebSocket = (url) => {
       if (wsRef.current?.readyState === WebSocket.OPEN) {
         const payload = {
           base64Audio: audioBase64, // Send audio as Base64 string
-          sttProvider: "Deepgram", // Use Deepgram for STT
-          ttsProvider: "Deepgram", // Use Deepgram for TTS
+          sttProvider: sttProvider || "Deepgram", // Use Deepgram for STT
+          ttsProvider: ttsProvider || "Deepgram", // Use Deepgram for TTS
         };
         console.log(payload);
 

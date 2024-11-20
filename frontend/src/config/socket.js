@@ -3,13 +3,8 @@ import { TranscriptionContext } from "../context/context";
 import testAudio from "../asset/testAudio.mp3";
 
 const useWebSocket = (url) => {
-  const {
-    setTranscriptionText,
-    ttsProvider,
-    setTtsProvider,
-    sttProvider,
-    setSttProvider,
-  } = useContext(TranscriptionContext);
+  const { setTranscriptionText, ttsProvider, sttProvider } =
+    useContext(TranscriptionContext);
   const wsRef = useRef(null); // Persist WebSocket across renders
   const mediaRecorderRef = useRef(null); // Store MediaRecorder instance
 
@@ -50,8 +45,8 @@ const useWebSocket = (url) => {
             const base64Data = reader.result.split(",")[1]; // Extract Base64 data after the header
             const payload = {
               buffer: base64Data,
-              sttProvider: "Deepgram", // Use Deepgram as the STT provider
-              ttsProvider: "Deepgram", // Use Deepgram for TTS as well
+              sttProvider: sttProvider || "Deepgram", // Use Deepgram as the STT provider
+              ttsProvider: ttsProvider || "Deepgram", // Use Deepgram for TTS as well
             };
             wsRef.current.send(JSON.stringify(payload)); // Send audio as Base64
             console.log("Sent live audio chunk");

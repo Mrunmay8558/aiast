@@ -120,7 +120,10 @@ async function transcribeAudio(base64Audio, sttProvider) {
 
   // Append the file stream to FormData
   formData.append("file", fs.createReadStream(outputPath), "audio.mp3");
-  formData.append("model", "whisper-large-v3");
+
+  if (sttProvider === "groq") {
+    formData.append("model", "whisper-large-v3");
+  }
 
   if (sttProvider !== "Deepgram") {
     try {

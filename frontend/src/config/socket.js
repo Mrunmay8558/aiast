@@ -3,7 +3,7 @@ import { TranscriptionContext } from "../context/context";
 import testAudio from "../asset/testAudio.mp3";
 
 const useWebSocket = (url) => {
-  const { setTranscriptionText } = useContext(TranscriptionContext);
+  const { setTranscriptionText,ttsProvider, setTtsProvider,sttProvider, setSttProvider } = useContext(TranscriptionContext);
   const wsRef = useRef(null); // Persist WebSocket across renders
   const mediaRecorderRef = useRef(null); // Store MediaRecorder instance
 
@@ -38,7 +38,7 @@ const useWebSocket = (url) => {
           event.data.size > 0 &&
           wsRef.current?.readyState === WebSocket.OPEN
         ) {
-          wsRef.current.send(event.data);
+          wsRef.current.send(event.data,);
           console.log("Sent live audio chunk");
         }
       };

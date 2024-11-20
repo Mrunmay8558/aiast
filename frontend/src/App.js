@@ -1,5 +1,7 @@
 import "./App.css";
+import { useContext } from "react";
 import ShowTranscriptedData from "./components/ShowTranscriptedData";
+import { TranscriptionContext } from "./context/context";
 import useWebSocket from "./config/socket";
 
 const PageStyle = {
@@ -23,10 +25,36 @@ const ButtonStyle = {
 
 function App() {
   const { startRecording, stopRecording } = useWebSocket("ws://localhost:8000");
+  const { ttsProvider, setTtsProvider, sttProvider, setSttProvider } =
+    useContext(TranscriptionContext);
 
   return (
     <div className="App" style={PageStyle}>
       <ShowTranscriptedData />
+      <div>
+        <label>
+          TTS Provider:
+          <select
+            value={ttsProvider}
+            onChange={(e) => setTtsProvider(e.target.value)}
+          >
+            <option value="Deepgram">Deepgram</option>
+            <option value="Groq">Groq</option>
+          </select>
+        </label>
+      </div>
+      <div>
+        <label>
+          STT Provider:
+          <select
+            value={sttProvider}
+            onChange={(e) => setSttProvider(e.target.value)}
+          >
+            <option value="Deepgram">Deepgram</option>
+            <option value="Groq">Groq</option>
+          </select>
+        </label>
+      </div>
       <div>
         <button style={ButtonStyle} onClick={startRecording}>
           Start Recording

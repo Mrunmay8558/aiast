@@ -7,15 +7,25 @@ const useWebSocket = (url) => {
   const wsRef = useRef(null); // Persist WebSocket across renders
   const mediaRecorderRef = useRef(null); // Store MediaRecorder instance
 
-  // Fetch and convert audio file to an ArrayBuffer
-  const getAudioArrayBuffer = async (filePath) => {
+  // Utility to convert ArrayBuffer to Base64
+  const arrayBufferToBase64 = (buffer) => {
+    let binary = "";
+    const bytes = new Uint8Array(buffer);
+    for (let i = 0; i < bytes.length; i++) {
+      binary += String.fromCharCode(bytes[i]);
+    }
+    return btoa(binary);
+  };
+
+  // Fetch and convert audio file to a Base64 string
+  const getAudioBase64 = async (filePath) => {
     try {
       const response = await fetch(filePath);
       const blob = await response.blob();
       const arrayBuffer = await blob.arrayBuffer();
-      return arrayBuffer;
+      return arrayBufferToBase64(arrayBuffer);
     } catch (error) {
-      console.error("Error converting file to ArrayBuffer:", error);
+      console.error("Error converting file to Base64:", error);
       throw error;
     }
   };
@@ -23,45 +33,18 @@ const useWebSocket = (url) => {
   const startRecording = async () => {
     try {
       // Send the test audio file (optional step)
-      const audioArrayBuffer = await getAudioArrayBuffer(testAudio);
-      // if (wsRef.current?.readyState === WebSocket.OPEN) {
-      //   wsRef.current.send(audioArrayBuffer);
-      //   console.log("Sent test audio file as ArrayBuffer");
-      // }
+      const audioBase64 = await getAudioBase64(testAudio);
+      if (wsRef.current?.readyState === WebSocket.OPEN) {
+        const payload = {
+          base64Audio: audioBase64, // Send audio as Base64 string
+          sttProvider: "Deepgram", // Use Deepgram for STT
+          ttsProvider: "Deepgram", // Use Deepgram for TTS
+        };
+        console.log(payload);
 
-      // Access microphone and start recording
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const mediaRecorder = new MediaRecorder(stream);
-
-      mediaRecorder.ondataavailable = (event) => {
-        if (
-          event.data.size > 0 &&
-          wsRef.current?.readyState === WebSocket.OPEN
-        ) {
-          const reader = new FileReader();
-
-          reader.onload = () => {
-            const base64Data = reader.result.split(",")[1]; // Extract Base64 data after the header
-            const payload = {
-              buffer: base64Data,
-              sttProvider: "Deepgram", // Use Deepgram as the STT provider
-              ttsProvider: "Deepgram", // Use Deepgram for TTS as well
-            };
-            wsRef.current.send(JSON.stringify(payload)); // Send audio as Base64
-            console.log("Sent live audio chunk");
-          };
-
-          reader.onerror = (error) => {
-            console.error("Error converting audio chunk to Base64:", error);
-          };
-
-          reader.readAsDataURL(event.data); // Convert Blob to Base64
-        }
-      };
-
-      mediaRecorder.start(100); // Record audio in 100ms chunks
-      mediaRecorderRef.current = mediaRecorder;
-      console.log("Recording started");
+        wsRef.current.send(JSON.stringify(payload)); // Send the payload as JSON
+        console.log("Sent test audio file as Base64");
+      }
     } catch (error) {
       console.error("Error during startRecording:", error);
     }

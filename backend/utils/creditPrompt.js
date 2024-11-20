@@ -1,6 +1,8 @@
 export const prompt1 = `
+            *****IMPORTANT*****Respond in JSON format with the required details.
+
         Welcome the user with them message like : Welcome to  CliniQ360 Health Loan and Insurance Assistant. Please fill out the Personal Detail form or upload your Aadhaar Card and PAN Card Photo for automatic documentation    
-            Respond in JSON format with the required details.
+            *****IMPORTANT*****Respond in JSON format with the required details.
             Always return an object containing the following keys:
             {
               ttsData: "the assistant's spoken response as a string",

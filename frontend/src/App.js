@@ -24,7 +24,7 @@ const ButtonStyle = {
 };
 
 function App() {
-  const { startRecording, stopRecording } = useWebSocket("ws://localhost:8000");
+  const { startRecording, stopRecording } = useWebSocket("ws://localhost:8001");
   const { ttsProvider, setTtsProvider, sttProvider, setSttProvider } =
     useContext(TranscriptionContext);
 

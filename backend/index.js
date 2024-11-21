@@ -2,165 +2,23 @@ import express from "express";
 import { WebSocketServer } from "ws";
 import { createServer } from "http";
 import dotenv from "dotenv";
+import { createClient, LiveTranscriptionEvents } from "@deepgram/sdk";
 import Groq from "groq-sdk";
-import axios from "axios";
-import { createClient } from "@deepgram/sdk";
 import { prompt1 } from "./utils/creditPrompt.js";
-import fs from "fs";
-import FormData from "form-data";
-import { writeFile } from "fs/promises";
-import { Buffer } from "buffer";
-import path from "path";
-import { model } from "mongoose";
 
 dotenv.config();
 
-if (!process.env.GROQ_API_KEY || !process.env.DEEPGRAM_API_KEY) {
-  console.error("Missing API keys in .env file. Please add them.");
+if (!process.env.DEEPGRAM_API_KEY || !process.env.GROQ_API_KEY) {
+  console.error("Missing Deepgram API key in .env file. Please add it.");
   process.exit(1);
 }
 
 const app = express();
 const server = createServer(app);
 const wsServer = new WebSocketServer({ noServer: true });
-const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
+
 const deepgram = createClient(process.env.DEEPGRAM_API_KEY);
-
-server.on("upgrade", (req, socket, head) => {
-  socket.on("error", handleSocketError);
-  wsServer.handleUpgrade(req, socket, head, (ws) => {
-    socket.removeListener("error", handleSocketError);
-    wsServer.emit("connection", ws, req);
-  });
-});
-
-const saveBase64AudioToFile = async (base64Data, outputPath) => {
-  try {
-    const audioBuffer = Buffer.from(base64Data, "base64");
-    await writeFile(outputPath, audioBuffer);
-    console.log(`Audio saved to: ${outputPath}`);
-  } catch (error) {
-    console.error("Error saving audio file:", error);
-    throw error;
-  }
-};
-
-wsServer.on("connection", (ws) => {
-  console.log("Client connected");
-
-  ws.on("error", handleSocketError);
-
-  ws.on("message", async (data) => {
-    console.log("Received audio data from client");
-    const { base64Audio, sttProvider } = JSON.parse(data);
-    console.log(base64Audio);
-    const outputPath = path.resolve("./debug_audio.mp3");
-    await saveBase64AudioToFile(base64Audio, outputPath);
-
-    try {
-      await processAudioBuffer(base64Audio, sttProvider, ws);
-    } catch (error) {
-      console.error("Error processing message:", error);
-      sendError(ws, error.message);
-    }
-  });
-
-  ws.on("close", () => {
-    console.log("Client disconnected");
-  });
-});
-
-function handleSocketError(err) {
-  console.error("Socket error:", err);
-}
-
-function sendError(ws, message) {
-  ws.send(JSON.stringify({ success: false, error: message }));
-}
-
-async function processAudioBuffer(base64Audio, sttProvider, ws) {
-  try {
-    const transcribedText = await transcribeAudio(base64Audio, sttProvider);
-    if (!transcribedText) {
-      throw new Error("Transcription failed or returned empty text.");
-    }
-
-    const parsedResponse = await generateAICompletion(transcribedText);
-
-    const ttsBuffer = await generateTTS(parsedResponse?.ttsData);
-    if (!ttsBuffer) {
-      throw new Error("Error generating TTS audio.");
-    }
-
-    ws.send(
-      JSON.stringify({
-        success: true,
-        base64Data: ttsBuffer.toString("base64"),
-        ttsData: parsedResponse?.ttsData,
-      })
-    );
-  } catch (error) {
-    console.error("Error in processAudioBuffer:", error);
-    sendError(ws, error.message);
-  }
-}
-
-async function transcribeAudio(base64Audio, sttProvider) {
-  const formData = new FormData();
-
-  // Save base64 audio to file
-  const base64String = base64Audio.includes("base64,")
-    ? base64Audio.split("base64,")[1]
-    : base64Audio;
-
-  const audioBuffer = Buffer.from(base64String, "base64");
-  const outputPath = path.resolve("./debug_audio.mp3");
-
-  await writeFile(outputPath, audioBuffer); // Save the base64 audio as a file
-
-  // Append the file stream to FormData
-  formData.append("file", fs.createReadStream(outputPath), "audio.mp3");
-
-  if (sttProvider === "groq") {
-    formData.append("model", "whisper-large-v3");
-  }
-
-  if (sttProvider !== "Deepgram") {
-    try {
-      const response = await axios.post(
-        "https://api.groq.com/openai/v1/audio/transcriptions",
-        formData,
-        {
-          headers: {
-            Authorization: `Bearer ${process.env.GROQ_API_KEY}`,
-            "Content-Type": "multipart/form-data",
-          },
-        }
-      );
-      return response.data?.text || null;
-    } catch (error) {
-      throw new Error(`Groq Transcription Error: ${error.message}`);
-    }
-  } else {
-    try {
-      const response = await axios.post(
-        "https://api.deepgram.com/v1/listen?model=nova-2&smart_format=true",
-        formData,
-        {
-          headers: {
-            Authorization: `Token ${process.env.DEEPGRAM_API_KEY}`,
-            "Content-Type": "multipart/form-data",
-          },
-        }
-      );
-      return (
-        response.data?.results?.channels[0]?.alternatives[0]?.transcript || null
-      );
-    } catch (error) {
-      throw new Error(`Deepgram Transcription Error: ${error.message}`);
-    }
-  }
-}
+const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
 async function generateAICompletion(transcribedText) {
   try {
@@ -199,6 +57,8 @@ async function generateTTS(text) {
     );
 
     const stream = await response.getStream();
+    console.log(stream);
+
     if (stream) {
       const chunks = [];
       for await (const chunk of stream) {
@@ -213,7 +73,92 @@ async function generateTTS(text) {
   }
 }
 
-const PORT = process.env.PORT || 8000;
+// Handle WebSocket upgrades
+server.on("upgrade", (req, socket, head) => {
+  socket.on("error", handleSocketError);
+  wsServer.handleUpgrade(req, socket, head, (ws) => {
+    socket.removeListener("error", handleSocketError);
+    wsServer.emit("connection", ws, req);
+  });
+});
+
+// Handle WebSocket connections
+wsServer.on("connection", (ws) => {
+  console.log("Client connected");
+
+  ws.on("error", handleSocketError);
+
+  const connection = deepgram.listen.live({
+    model: "nova-2",
+    language: "en-US",
+    smart_format: true,
+    endpointing: 500,
+  });
+
+  connection.on(LiveTranscriptionEvents.Open, () => {
+    console.log("Deepgram live transcription connection opened");
+
+    // Relay transcription results to the client
+    connection.on(LiveTranscriptionEvents.Transcript, async (data) => {
+      const transcript = data.channel.alternatives[0].transcript;
+
+      if (transcript) {
+        console.log("transcript", transcript);
+
+        const parsedResponse = await generateAICompletion(transcript);
+        const ttsBuffer = await generateTTS(parsedResponse?.ttsData);
+        if (!ttsBuffer) {
+          throw new Error("Error generating TTS audio.");
+        }
+        ws.send(
+          JSON.stringify({
+            success: true,
+            base64Data: ttsBuffer.toString("base64"),
+            ttsData: parsedResponse?.ttsData,
+          })
+        );
+      }
+    });
+
+    connection.on(LiveTranscriptionEvents.Metadata, (metadata) => {
+      console.log("Received metadata:", metadata);
+    });
+
+    connection.on(LiveTranscriptionEvents.Close, () => {
+      console.log("Deepgram live transcription connection closed");
+    });
+
+    connection.on(LiveTranscriptionEvents.Error, (err) => {
+      console.error("Deepgram live transcription error:", err);
+      ws.send(
+        JSON.stringify({
+          type: "error",
+          message: "Transcription error occurred.",
+        })
+      );
+    });
+  });
+
+  ws.on("message", (data) => {
+    console.log("Received audio data from client");
+    const audioChunk = Buffer.from(data);
+
+    // Send the audio chunk to Deepgram
+    connection.send(audioChunk);
+  });
+
+  ws.on("close", () => {
+    console.log("Client disconnected");
+  });
+});
+
+// Handle WebSocket errors
+function handleSocketError(err) {
+  console.error("Socket error:", err);
+}
+
+// Start the server
+const PORT = process.env.PORT || 8001;
 server.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });

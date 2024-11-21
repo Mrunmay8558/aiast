@@ -55,11 +55,19 @@ const useWebSocket = (url) => {
     ws.onmessage = (event) => {
       try {
         const responseData = JSON.parse(event.data);
+        console.log(responseData);
 
-        if (responseData.type === "transcription") {
-          const transcript = responseData.transcript;
+        if (responseData?.success) {
+          const transcript = responseData.ttsData;
           console.log("Transcription received:", transcript);
           setTranscriptionText(transcript); // Update transcription state
+          if (responseData?.base64Data) {
+            // Optionally handle TTS base64 audio for playback or further processing
+            const audio = new Audio(
+              `data:audio/wav;base64,${responseData?.base64Data}`
+            );
+            audio?.play(); // Play the received TTS audio
+          }
         }
 
         if (responseData.type === "error") {

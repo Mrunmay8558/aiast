@@ -53,7 +53,7 @@ wsServer.on("connection", (ws) => {
   ws.on("message", async (data) => {
     console.log("Received audio data from client");
     const { base64Audio, sttProvider } = JSON.parse(data);
-    console.log(base64Audio);
+    // console.log(base64Audio);
     const outputPath = path.resolve("./debug_audio.mp3");
     await saveBase64AudioToFile(base64Audio, outputPath);
 

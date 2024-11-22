@@ -92,7 +92,13 @@ wsServer.on("connection", (ws) => {
     model: "nova-2",
     language: "en-US",
     smart_format: true,
+    encoding: "linear16",
+    channels: 1,
+    sample_rate: 16000,
+    interim_results: true,
+    utterance_end_ms: "1000",
     endpointing: 500,
+    vad_events: true,
   });
 
   connection.on(LiveTranscriptionEvents.Open, () => {

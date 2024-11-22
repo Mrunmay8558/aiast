@@ -92,13 +92,13 @@ wsServer.on("connection", (ws) => {
     model: "nova-2",
     language: "en-US",
     smart_format: true,
-    encoding: "linear16",
-    channels: 1,
-    sample_rate: 16000,
-    interim_results: true,
-    utterance_end_ms: "1000",
+    // encoding: "linear16",
+    // channels: 1,
+    // sample_rate: 16000,
+    // interim_results: true,
+    // utterance_end_ms: "1000",
     endpointing: 500,
-    vad_events: true,
+    // vad_events: true,
   });
 
   connection.on(LiveTranscriptionEvents.Open, () => {
@@ -106,6 +106,7 @@ wsServer.on("connection", (ws) => {
 
     // Relay transcription results to the client
     connection.on(LiveTranscriptionEvents.Transcript, async (data) => {
+      
       const transcript = data.channel.alternatives[0].transcript;
 
       if (transcript) {

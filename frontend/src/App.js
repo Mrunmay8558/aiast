@@ -24,7 +24,7 @@ const ButtonStyle = {
 };
 
 function App() {
-  const { startRecording, stopRecording } = useWebSocket("ws://localhost:8001");
+  const { startSilenceDetector, stopSilenceDetector } = useWebSocket("ws://localhost:8001");
   const { ttsProvider, setTtsProvider, sttProvider, setSttProvider } =
     useContext(TranscriptionContext);
 
@@ -56,10 +56,10 @@ function App() {
         </label>
       </div>
       <div>
-        <button style={ButtonStyle} onClick={startRecording}>
+        <button style={ButtonStyle} onClick={startSilenceDetector}>
           Start Recording
         </button>
-        <button style={ButtonStyle} onClick={stopRecording}>
+        <button style={ButtonStyle} onClick={stopSilenceDetector}>
           Stop Recording
         </button>
       </div>

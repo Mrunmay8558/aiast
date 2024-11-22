@@ -5,7 +5,8 @@ import { createSilenceDetector } from "../components/Vad";
 const useWebSocket = (url) => {
   const { setTranscriptionText } = useContext(TranscriptionContext);
   const wsRef = useRef(null); // WebSocket instance
-  const silenceDetectorRef = useRef(null); // SilenceDetector instance
+  const silenceDetectorRef = useRef(null); // Silence detector instance
+  const audioRef = useRef(null); // Ref to manage audio playback
 
   useEffect(() => {
     const ws = new WebSocket(url);
@@ -26,11 +27,9 @@ const useWebSocket = (url) => {
           setTranscriptionText(transcript); // Update transcription state
 
           if (responseData?.base64Data) {
-            // Optionally handle TTS base64 audio for playback or further processing
-            const audio = new Audio(
-              `data:audio/wav;base64,${responseData?.base64Data}`
-            );
-            audio?.play(); // Play the received TTS audio
+            // Handle TTS base64 audio playback
+            const audioData = `data:audio/wav;base64,${responseData?.base64Data}`;
+            playAudio(audioData);
           }
         }
 
@@ -57,6 +56,27 @@ const useWebSocket = (url) => {
     };
   }, [url, setTranscriptionText]);
 
+  const playAudio = (audioData) => {
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current = null;
+    }
+
+    const audio = new Audio(audioData);
+    audioRef.current = audio;
+
+    audio.play().catch((error) => {
+      console.error("Error playing audio:", error);
+    });
+  };
+
+  const pauseAudio = () => {
+    if (audioRef.current && !audioRef.current.paused) {
+      audioRef.current.pause();
+      console.log("Audio paused");
+    }
+  };
+
   const startSilenceDetector = async () => {
     silenceDetectorRef.current = createSilenceDetector({
       noiseThreshold: 10,
@@ -70,7 +90,8 @@ const useWebSocket = (url) => {
         }
       },
       onUtterance: () => {
-        console.log("User is fumbling while speaking");
+        console.log("User started speaking");
+        pauseAudio(); // Pause audio playback when user starts speaking
       },
     });
 

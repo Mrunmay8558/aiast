@@ -148,7 +148,7 @@ wsServer.on("connection", (ws) => {
 
         // Send audio buffer to Deepgram connection
         setTimeout(() => {
-          connection.send(audioBuffer);
+          connection?.send(audioBuffer);
           console.log("Sent audio chunk to Deepgram.");
         }, 1000);
       }

@@ -6,11 +6,9 @@ import { TranscriptionProvider } from "./context/context";
 
 const root = ReactDOM.createRoot(document.getElementById("root"));
 root.render(
-  <React.StrictMode>
-    <TranscriptionProvider>
-      <App />
-    </TranscriptionProvider>
-  </React.StrictMode>
+  <TranscriptionProvider>
+    <App />
+  </TranscriptionProvider>
 );
 
 // If you want to start measuring performance in your app, pass a function

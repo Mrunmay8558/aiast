@@ -97,6 +97,7 @@ wsServer.on("connection", (ws) => {
         // Start the Deepgram live transcription connection
         connection = deepgram.listen.live({
           language: "en-US",
+          model: "nova-2",
           smart_format: true,
           endpointing: 500, // Optional, silence duration before it ends the audio stream
         });

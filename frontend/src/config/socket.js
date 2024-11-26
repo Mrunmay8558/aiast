@@ -8,53 +8,74 @@ const useWebSocket = (url) => {
   const silenceDetectorRef = useRef(null); // Silence detector instance
   const audioRef = useRef(null); // Ref to manage audio playback
 
-  useEffect(() => {
-    const ws = new WebSocket(url);
-    wsRef.current = ws;
+  const startRecording = () => {
+    // Open WebSocket connection
+    if (wsRef.current?.readyState !== WebSocket.OPEN) {
+      wsRef.current = new WebSocket(url);
 
-    ws.onopen = () => {
-      console.log("Connected to WebSocket server");
-    };
+      wsRef.current.onopen = () => {
+        console.log("WebSocket connection opened");
+        wsRef.current.send(
+          JSON.stringify({ type: "startRecording", connection: true })
+        );
+      };
 
-    ws.onmessage = (event) => {
-      try {
-        const responseData = JSON.parse(event.data);
-        console.log(responseData);
+      wsRef.current.onmessage = (event) => {
+        try {
+          const responseData = JSON.parse(event.data);
+          console.log(responseData);
 
-        if (responseData?.success) {
-          const transcript = responseData.ttsData;
-          console.log("Transcription received:", transcript);
-          setTranscriptionText(transcript); // Update transcription state
+          if (responseData?.success) {
+            const transcript = responseData.ttsData;
+            console.log("Transcription received:", transcript);
+            setTranscriptionText(transcript); // Update transcription state
 
-          if (responseData?.base64Data) {
-            // Handle TTS base64 audio playback
-            const audioData = `data:audio/wav;base64,${responseData?.base64Data}`;
-            playAudio(audioData);
+            if (responseData?.base64Data) {
+              // Handle TTS base64 audio playback
+              const audioData = `data:audio/wav;base64,${responseData?.base64Data}`;
+              playAudio(audioData);
+            }
           }
+
+          if (responseData.type === "error") {
+            console.error("Error from server:", responseData.message);
+          }
+        } catch (error) {
+          console.error("Error parsing WebSocket message:", error);
         }
+      };
 
-        if (responseData.type === "error") {
-          console.error("Error from server:", responseData.message);
-        }
-      } catch (error) {
-        console.error("Error parsing WebSocket message:", error);
-      }
-    };
+      wsRef.current.onerror = (error) => {
+        console.error("WebSocket error:", error);
+      };
 
-    ws.onerror = (error) => {
-      console.error("WebSocket error:", error);
-    };
+      wsRef.current.onclose = () => {
+        console.log("WebSocket connection closed");
+        stopSilenceDetector(); // Stop silence detection on WebSocket close
+      };
+    }
 
-    ws.onclose = () => {
-      console.log("WebSocket connection closed");
-      stopSilenceDetector(); // Stop silence detection on WebSocket close
-    };
+    // Start silence detection
+    startSilenceDetector();
+  };
 
-    return () => {
-      ws.close();
-      stopSilenceDetector(); // Cleanup on component unmount
-    };
-  }, [url, setTranscriptionText]);
+  const stopRecording = () => {
+    // Send stop signal to the WebSocket server
+    if (wsRef.current?.readyState === WebSocket.OPEN) {
+      wsRef.current.send(
+        JSON.stringify({ type: "stopRecording", connection: false })
+      );
+    }
+
+    // Close WebSocket connection
+    if (wsRef.current) {
+      wsRef.current.close();
+      wsRef.current = null;
+    }
+
+    // Stop silence detection
+    stopSilenceDetector();
+  };
 
   const playAudio = (audioData) => {
     if (audioRef.current) {
@@ -111,7 +132,7 @@ const useWebSocket = (url) => {
     }
   };
 
-  return { startSilenceDetector, stopSilenceDetector };
+  return { startRecording, stopRecording };
 };
 
 export default useWebSocket;

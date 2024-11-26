@@ -1,5 +1,5 @@
 import "./App.css";
-import { useContext } from "react";
+import { useContext, useState } from "react";
 import ShowTranscriptedData from "./components/ShowTranscriptedData";
 import { TranscriptionContext } from "./context/context";
 import useWebSocket from "./config/socket";
@@ -24,7 +24,7 @@ const ButtonStyle = {
 };
 
 function App() {
-  const { startSilenceDetector, stopSilenceDetector } = useWebSocket("ws://localhost:8001");
+  const { startRecording, stopRecording } = useWebSocket("ws://localhost:8001");
   const { ttsProvider, setTtsProvider, sttProvider, setSttProvider } =
     useContext(TranscriptionContext);
 
@@ -56,10 +56,10 @@ function App() {
         </label>
       </div>
       <div>
-        <button style={ButtonStyle} onClick={startSilenceDetector}>
+        <button style={ButtonStyle} onClick={startRecording}>
           Start Recording
         </button>
-        <button style={ButtonStyle} onClick={stopSilenceDetector}>
+        <button style={ButtonStyle} onClick={stopRecording}>
           Stop Recording
         </button>
       </div>

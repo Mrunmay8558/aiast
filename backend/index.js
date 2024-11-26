@@ -9,7 +9,7 @@ import { prompt1 } from "./utils/creditPrompt.js";
 dotenv.config();
 
 if (!process.env.DEEPGRAM_API_KEY || !process.env.GROQ_API_KEY) {
-  console.error("Missing Deepgram API key in .env file. Please add it.");
+  console.error("Missing API keys in .env file. Please add them.");
   process.exit(1);
 }
 
@@ -20,6 +20,7 @@ const wsServer = new WebSocketServer({ noServer: true });
 const deepgram = createClient(process.env.DEEPGRAM_API_KEY);
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
+// Generate AI Completion using Groq
 async function generateAICompletion(transcribedText) {
   try {
     const response = await groq.chat.completions.create({
@@ -32,17 +33,14 @@ async function generateAICompletion(transcribedText) {
     });
 
     const completionText = response.choices[0]?.message?.content || "{}";
-
-    // Parse JSON response
     return JSON.parse(completionText);
   } catch (error) {
     throw new Error("AI Completion Error: " + error.message);
   }
 }
 
+// Generate TTS audio
 async function generateTTS(text) {
-  console.log(text);
-
   if (!text) {
     throw new Error("No text provided for TTS generation.");
   }
@@ -50,30 +48,24 @@ async function generateTTS(text) {
     const response = await deepgram.speak.request(
       { text },
       {
-        model: "aura-asteria-en",
         encoding: "linear16",
         container: "wav",
       }
     );
 
     const stream = await response.getStream();
-    console.log(stream);
-
-    if (stream) {
-      const chunks = [];
-      for await (const chunk of stream) {
-        chunks.push(chunk);
-      }
-      const buffer = Buffer.concat(chunks);
-      const base64Audio = buffer.toString("base64");
-      return base64Audio;
+    const chunks = [];
+    for await (const chunk of stream) {
+      chunks.push(chunk);
     }
+    const buffer = Buffer.concat(chunks);
+    return buffer.toString("base64");
   } catch (error) {
     throw new Error("TTS Generation Error: " + error.message);
   }
 }
 
-// Handle WebSocket upgrades
+// WebSocket Upgrade Handling
 server.on("upgrade", (req, socket, head) => {
   socket.on("error", handleSocketError);
   wsServer.handleUpgrade(req, socket, head, (ws) => {
@@ -82,125 +74,97 @@ server.on("upgrade", (req, socket, head) => {
   });
 });
 
-// Handle WebSocket connections
 wsServer.on("connection", (ws) => {
   console.log("Client connected");
-  const connectionMap = new Map(); // Store Deepgram connections
-
   ws.on("error", handleSocketError);
 
-  ws.on("message", async (data) => {
+  let connection = null;
+
+  ws.on("message", async (message) => {
     try {
-      const { type, audioChunk, model } = JSON.parse(data);
+      console.log("Received message:", message);
+      const parsedMessage = JSON.parse(message);
+      // console.log("Received message:", parsedMessage);
 
-      // Handle startRecording
-      if (type === "startRecording") {
-        if (connectionMap.has(ws)) {
-          console.warn("Connection already active for this client");
-          return;
-        }
+      if (parsedMessage.connection === true && !connection) {
+        console.log("Starting Deepgram connection");
 
-        const deepgramConnection = deepgram.listen.live({
-          model: "nova-2",
+        connection = deepgram.listen.live({
           language: "en-US",
           smart_format: true,
           endpointing: 500,
         });
 
-        connectionMap.set(ws, deepgramConnection);
-
-        deepgramConnection.on(LiveTranscriptionEvents.Open, () => {
-          console.log("Deepgram connection opened");
+        connection.on(LiveTranscriptionEvents.Open, () => {
+          console.log("Deepgram connection opened.");
         });
 
-        deepgramConnection.on(
-          LiveTranscriptionEvents.Transcript,
-          async (transcriptionData) => {
-            const transcript =
-              transcriptionData.channel.alternatives[0]?.transcript;
-            if (transcript) {
-              console.log("Transcript received:", transcript);
+        connection.on(LiveTranscriptionEvents.Transcript, async (data) => {
+          const transcript = data.channel.alternatives[0]?.transcript;
+          if (transcript) {
+            console.log("Transcript:", transcript);
 
-              let parsedResponse, ttsBuffer;
-              if (model === "groq") {
-                // Use Groq for AI Completion and TTS
-                parsedResponse = await generateAICompletion(transcript);
-                ttsBuffer = await generateTTS(parsedResponse?.ttsData);
-              } else {
-                // Use Deepgram for TTS only
-                parsedResponse = { ttsData: transcript }; // No external AI processing
-                ttsBuffer = await generateTTS(transcript);
-              }
+            const aiResponse = await generateAICompletion(transcript);
+            const ttsBuffer = await generateTTS(aiResponse?.ttsData);
 
-              ws.send(
-                JSON.stringify({
-                  success: true,
-                  base64Data: ttsBuffer.toString("base64"),
-                  ttsData: parsedResponse?.ttsData,
-                })
-              );
-            }
+            if (!ttsBuffer) throw new Error("TTS Generation Failed.");
+
+            ws.send(
+              JSON.stringify({
+                success: true,
+                base64Data: ttsBuffer,
+                ttsData: aiResponse?.ttsData,
+              })
+            );
           }
-        );
-
-        deepgramConnection.on(LiveTranscriptionEvents.Close, () => {
-          console.log("Deepgram connection closed");
         });
 
-        deepgramConnection.on(LiveTranscriptionEvents.Error, (err) => {
+        connection.on(LiveTranscriptionEvents.Error, (err) => {
           console.error("Deepgram error:", err);
           ws.send(
             JSON.stringify({
               type: "error",
-              message: "Deepgram transcription error occurred.",
+              message: "An error occurred with the transcription.",
             })
           );
         });
-      }
 
-      // Handle stopRecording
-      if (type === "stopRecording") {
-        const deepgramConnection = connectionMap.get(ws);
-        if (deepgramConnection) {
-          deepgramConnection.close();
-          connectionMap.delete(ws);
-          console.log("Deepgram connection closed by client");
-        }
-      }
-
-      // Handle audioChunk
-      if (type === "audioChunk" && connectionMap.has(ws)) {
-        const audioBuffer = Buffer.from(audioChunk);
-        connectionMap.get(ws).send(audioBuffer);
+        connection.on(LiveTranscriptionEvents.Close, () => {
+          console.log("Deepgram connection closed.");
+          connection = null;
+        });
+      } else if (parsedMessage.connection === false && connection) {
+        console.log("Closing Deepgram connection");
+        connection?.close();
+        connection = null;
       }
     } catch (error) {
-      console.error("Error processing message:", error);
+      console.error("Error handling message:", error);
       ws.send(
         JSON.stringify({
           type: "error",
-          message: error.message,
+          message: error.message || "An unknown error occurred.",
         })
       );
     }
   });
 
   ws.on("close", () => {
-    console.log("Client disconnected");
-    const deepgramConnection = connectionMap.get(ws);
-    if (deepgramConnection) {
-      deepgramConnection.close();
-      connectionMap.delete(ws);
+    console.log("Client disconnected.");
+    if (connection) {
+      connection.close();
+      connection = null;
     }
   });
 });
 
-// Handle WebSocket errors
+// WebSocket Error Handling
 function handleSocketError(err) {
-  console.error("Socket error:", err);
+  console.error("WebSocket error:", err);
 }
 
-// Start the server
+// Start Server
 const PORT = process.env.PORT || 8001;
 server.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+  console.log(`Server is running on port ${PORT}`);
 });

@@ -1,7 +1,10 @@
-export const prompt1 = `
+export const prompt1 = (llmContext) => {
+  return `
   ****IMPORTANT**** Respond in JSON format with the required details.
 
   The chatbot will guide the user and provide answers to their questions or ask for required information when needed.
+
+  ***RESPOND AS PER YOUR PREVIOUS CONTEXT OR RESPONSE WHICH IS: ${llmContext}***
 
   Always return an object containing the following key:
   {
@@ -9,7 +12,8 @@ export const prompt1 = `
   }
 
   Ensure that the assistant's spoken response is stored in the 'ttsData' field.
-`;
+  `;
+};
 
 export const prompt2 = `
         Based on the user's input, populate the following details and return an object containing the specified keys.

@@ -21,12 +21,14 @@ const deepgram = createClient(process.env.DEEPGRAM_API_KEY);
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
 // Generate AI Completion using Groq
-async function generateAICompletion(transcribedText) {
+async function generateAICompletion(transcribedText, llmcontext) {
   try {
+    console.log("llmContext", llmcontext);
+
     const response = await groq.chat.completions.create({
       messages: [
         { role: "user", content: transcribedText },
-        { role: "system", content: prompt1 },
+        { role: "system", content: prompt1(llmcontext) },
       ],
       model: "llama3-70b-8192",
       response_format: { type: "json_object" },
@@ -80,6 +82,7 @@ wsServer.on("connection", (ws) => {
 
   let connection = null;
   let inactivityTimer = null;
+  let llmcontext = "";
   ws.on("message", async (message) => {
     try {
       console.log("Received message:", message);
@@ -99,7 +102,7 @@ wsServer.on("connection", (ws) => {
           language: "en-US",
           model: "nova-2",
           smart_format: true,
-          endpointing: 500, // Optional, silence duration before it ends the audio stream
+          endpointing: 1000, // Optional, silence duration before it ends the audio stream
         });
 
         connection.on(LiveTranscriptionEvents.Open, () => {
@@ -111,7 +114,11 @@ wsServer.on("connection", (ws) => {
           if (transcript) {
             console.log("Transcript:", transcript);
 
-            const aiResponse = await generateAICompletion(transcript);
+            const aiResponse = await generateAICompletion(
+              transcript,
+              llmcontext
+            );
+            llmcontext += aiResponse?.ttsData;
             const ttsBuffer = await generateTTS(aiResponse?.ttsData);
 
             if (!ttsBuffer) throw new Error("TTS Generation Failed.");

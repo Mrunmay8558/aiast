@@ -79,20 +79,26 @@ wsServer.on("connection", (ws) => {
   ws.on("error", handleSocketError);
 
   let connection = null;
-
+  let inactivityTimer = null;
   ws.on("message", async (message) => {
     try {
       console.log("Received message:", message);
-      const parsedMessage = JSON.parse(message);
-      // console.log("Received message:", parsedMessage);
+      const audioChunkFr = message;
 
-      if (parsedMessage.connection === true && !connection) {
+      // Clear the inactivity timer on each message
+      if (inactivityTimer) {
+        clearTimeout(inactivityTimer);
+        inactivityTimer = null;
+      }
+
+      if (audioChunkFr && !connection) {
         console.log("Starting Deepgram connection");
 
+        // Start the Deepgram live transcription connection
         connection = deepgram.listen.live({
           language: "en-US",
           smart_format: true,
-          endpointing: 500,
+          endpointing: 500, // Optional, silence duration before it ends the audio stream
         });
 
         connection.on(LiveTranscriptionEvents.Open, () => {
@@ -109,6 +115,7 @@ wsServer.on("connection", (ws) => {
 
             if (!ttsBuffer) throw new Error("TTS Generation Failed.");
 
+            // Send TTS audio back to the client
             ws.send(
               JSON.stringify({
                 success: true,
@@ -133,11 +140,27 @@ wsServer.on("connection", (ws) => {
           console.log("Deepgram connection closed.");
           connection = null;
         });
-      } else if (parsedMessage.connection === false && connection) {
-        console.log("Closing Deepgram connection");
-        connection?.close();
-        connection = null;
       }
+
+      if (audioChunkFr && connection) {
+        // Convert the audio chunk from Base64
+        const audioBuffer = Buffer.from(audioChunkFr, "base64");
+
+        // Send audio buffer to Deepgram connection
+        setTimeout(() => {
+          connection.send(audioBuffer);
+          console.log("Sent audio chunk to Deepgram.");
+        }, 1000);
+      }
+
+      // Set inactivity timer to close the connection after a grace period
+      inactivityTimer = setTimeout(() => {
+        console.log("Closing Deepgram connection due to inactivity.");
+        if (connection) {
+          connection.finish();
+          connection = null;
+        }
+      }, 10000); // 10 seconds of inactivity before closing
     } catch (error) {
       console.error("Error handling message:", error);
       ws.send(
@@ -152,7 +175,7 @@ wsServer.on("connection", (ws) => {
   ws.on("close", () => {
     console.log("Client disconnected.");
     if (connection) {
-      connection.close();
+      connection.finish();
       connection = null;
     }
   });

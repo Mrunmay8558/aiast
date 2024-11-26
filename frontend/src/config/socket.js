@@ -102,7 +102,7 @@ const useWebSocket = (url) => {
     silenceDetectorRef.current = createSilenceDetector({
       noiseThreshold: 10,
       silenceDurationThreshold: 3000,
-      wordGapThreshold: 500,
+      wordGapThreshold: 1000,
       onSilence: (audioBuffer) => {
         // Send audio buffer to WebSocket
         if (wsRef.current?.readyState === WebSocket.OPEN) {

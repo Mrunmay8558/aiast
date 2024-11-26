@@ -1,6 +1,7 @@
 import { useContext, useEffect, useRef } from "react";
 import { TranscriptionContext } from "../context/context";
 import { createSilenceDetector } from "../components/Vad";
+import { str1, str2, str3 } from "../asset/audios/questions";
 
 const useWebSocket = (url) => {
   const { setTranscriptionText } = useContext(TranscriptionContext);
@@ -90,11 +91,30 @@ const useWebSocket = (url) => {
       console.error("Error playing audio:", error);
     });
   };
-
   const pauseAudio = () => {
     if (audioRef.current && !audioRef.current.paused) {
       audioRef.current.pause();
-      console.log("Audio paused");
+      console.log("Main audio paused");
+
+      // Array of random audio snippets
+      const randomAudioSnippets = [str1, str2, str3];
+
+      // Choose a random snippet from the array
+      const randomSnippet =
+        randomAudioSnippets[
+          Math.floor(Math.random() * randomAudioSnippets.length)
+        ];
+      const audioSrc = `data:audio/mp3;base64,${randomSnippet}`;
+      // Play the randomly selected snippet
+      const snippetAudio = new Audio(audioSrc);
+      snippetAudio
+        .play()
+        .then(() => {
+          console.log("Playing random snippet:", audioSrc);
+        })
+        .catch((error) => {
+          console.error("Error playing random snippet:", error);
+        });
     }
   };
 

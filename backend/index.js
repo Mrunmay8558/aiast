@@ -5,6 +5,7 @@ import dotenv from "dotenv";
 import { createClient, LiveTranscriptionEvents } from "@deepgram/sdk";
 import Groq from "groq-sdk";
 import { prompt1 } from "./utils/creditPrompt.js";
+import { type } from "os";
 
 dotenv.config();
 
@@ -118,6 +119,12 @@ wsServer.on("connection", (ws) => {
 
         connection.on(LiveTranscriptionEvents.Open, () => {
           console.log("Deepgram connection opened.");
+          ws.send(
+            JSON.stringify({
+              type: "dgConn",
+              deepgramConnection: true,
+            })
+          );
         });
 
         connection.on(LiveTranscriptionEvents.Transcript, async (data) => {

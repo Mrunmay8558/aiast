@@ -8,6 +8,10 @@ const useWebSocket = (url) => {
   const wsRef = useRef(null); // WebSocket instance
   const silenceDetectorRef = useRef(null); // Silence detector instance
   const audioRef = useRef(null); // Ref to manage audio playback
+  const audioChunks = useRef([]); // Buffer for collected audio chunks
+  let audioSendInterval = null; // Interval ID for sending audio
+  let dgConnected = null; // Deepgram connection status
+  let payload;
 
   const startRecording = () => {
     // Open WebSocket connection
@@ -30,7 +34,7 @@ const useWebSocket = (url) => {
           const responseData = JSON.parse(event.data);
           console.log(responseData);
 
-          if (responseData?.success) {
+          if (responseData?.success && responseData?.type === "transcript") {
             const transcript = responseData.ttsData;
             console.log("Transcription received:", transcript);
             setTranscriptionText(transcript); // Update transcription state
@@ -40,6 +44,9 @@ const useWebSocket = (url) => {
               const audioData = `data:audio/wav;base64,${responseData?.base64Data}`;
               playAudio(audioData);
             }
+          } else if (responseData?.type === "dgConn") {
+            console.log("Deepgram connection opened");
+            dgConnected = true;
           }
 
           if (responseData.type === "error") {
@@ -99,6 +106,7 @@ const useWebSocket = (url) => {
       console.error("Error playing audio:", error);
     });
   };
+
   const pauseAudio = () => {
     if (audioRef.current && !audioRef.current.paused) {
       audioRef.current.pause();
@@ -129,18 +137,39 @@ const useWebSocket = (url) => {
   const startSilenceDetector = async () => {
     silenceDetectorRef.current = createSilenceDetector({
       noiseThreshold: 10,
-      silenceDurationThreshold: 3000,
+      silenceDurationThreshold: 1600,
       wordGapThreshold: 1000,
-      onSilence: (audioBuffer) => {
-        // Send audio buffer to WebSocket
+      onSilence: () => {
+        console.log("Silence detected. Sending stop flag to backend...");
         if (wsRef.current?.readyState === WebSocket.OPEN) {
-          wsRef.current.send(audioBuffer);
-          console.log("Sent audio buffer on silence");
+          payload = { type: "audioStop", audioStop: true };
+          wsRef.current.send(JSON.stringify(payload));
         }
+        // Stop sending audio chunks
+        clearInterval(audioSendInterval);
+        audioSendInterval = null;
       },
-      onUtterance: () => {
-        console.log("User started speaking");
-        pauseAudio(); // Pause audio playback when user starts speaking
+      onUtterance: (audioBuffer) => {
+        console.log("Utterance detected. Sending audio chunks to backend...");
+        pauseAudio(); // Pause playback when speaking starts
+
+        if (!audioSendInterval) {
+          audioSendInterval = setInterval(() => {
+            if (wsRef.current?.readyState === WebSocket.OPEN) {
+              const audioBlob = new Blob(audioChunks.current, {
+                type: "audio/webm",
+              });
+              if (audioBlob.size > 0 && dgConnected !== null) {
+                wsRef.current.send(audioBlob);
+              }
+              console.log("Audio chunk sent to backend");
+              audioChunks.current = []; // Clear buffer after sending
+            }
+          }, 1500);
+        }
+
+        // Add audio buffer to chunks
+        audioChunks.current.push(audioBuffer);
       },
     });
 
@@ -157,6 +186,11 @@ const useWebSocket = (url) => {
       silenceDetectorRef.current.stop();
       silenceDetectorRef.current = null;
       console.log("Silence detector stopped");
+    }
+    if (audioSendInterval) {
+      clearInterval(audioSendInterval);
+      audioSendInterval = null;
+      dgConnected = null;
     }
   };
 

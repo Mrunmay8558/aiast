@@ -32,9 +32,9 @@ const useWebSocket = (url) => {
       wsRef.current.onmessage = (event) => {
         try {
           const responseData = JSON.parse(event.data);
-          console.log(responseData);
+          console.log("resData", responseData);
 
-          if (responseData?.success && responseData?.type === "transcript") {
+          if (responseData?.success) {
             const transcript = responseData.ttsData;
             console.log("Transcription received:", transcript);
             setTranscriptionText(transcript); // Update transcription state
@@ -148,10 +148,7 @@ const useWebSocket = (url) => {
         }
       },
       onUtterance: (eventData) => {
-        console.log(
-          "Utterance detected. Sending audio chunks to backend...",
-          eventData
-        );
+        console.log("Utterance detected. Sending audio chunks to backend...");
 
         pauseAudio(); // Pause playback when speaking starts
 

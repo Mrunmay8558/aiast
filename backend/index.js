@@ -113,7 +113,7 @@ wsServer.on("connection", (ws) => {
           language: "en-US",
           model: "nova-2",
           smart_format: true,
-          endpointing: 1000,
+          endpointing: 10000,
         });
 
         connection.on(LiveTranscriptionEvents.Open, () => {
@@ -132,10 +132,11 @@ wsServer.on("connection", (ws) => {
             console.log("Transcript:", transcript);
             tranlatedAudioConcat += transcript;
             console.log("tranlatedAudioConcat", tranlatedAudioConcat);
+            console.log(parsedMessage);
 
             if (
               parsedMessage?.type === "audioStop" &&
-              parsedMessage?.isStop === true
+              parsedMessage?.audioStop === true
             ) {
               tranlatedAudioConcat = "";
               const aiResponse = await generateAICompletion(
@@ -168,7 +169,6 @@ wsServer.on("connection", (ws) => {
 
         connection.on(LiveTranscriptionEvents.Close, () => {
           console.log("Deepgram connection closed.");
-          connection = null;
         });
       }
 

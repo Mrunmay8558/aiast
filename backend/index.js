@@ -5,8 +5,7 @@ import dotenv from "dotenv";
 import { createClient, LiveTranscriptionEvents } from "@deepgram/sdk";
 import Groq from "groq-sdk";
 import { prompt1 } from "./utils/creditPrompt.js";
-import { type } from "os";
-
+import fs from "fs";
 dotenv.config();
 
 if (!process.env.DEEPGRAM_API_KEY || !process.env.GROQ_API_KEY) {
@@ -107,7 +106,7 @@ wsServer.on("connection", (ws) => {
         inactivityTimer = null;
       }
 
-      if (audioChunkFr && !connection) {
+      if (audioChunkFr || !connection) {
         console.log("Starting Deepgram connection");
 
         connection = deepgram.listen.live({
@@ -132,6 +131,8 @@ wsServer.on("connection", (ws) => {
           if (transcript) {
             console.log("Transcript:", transcript);
             tranlatedAudioConcat += transcript;
+            console.log("tranlatedAudioConcat", tranlatedAudioConcat);
+
             if (
               parsedMessage?.type === "audioStop" &&
               parsedMessage?.isStop === true
@@ -174,6 +175,13 @@ wsServer.on("connection", (ws) => {
       if (audioChunkFr && connection) {
         // Convert the audio chunk from Base64
         const audioBuffer = Buffer.from(audioChunkFr, "base64");
+        fs.writeFile("output_audio.wav", audioBuffer, (err) => {
+          if (err) {
+            console.error("Error saving the audio buffer:", err);
+          } else {
+            console.log("Audio buffer saved as output_audio.wav");
+          }
+        });
 
         // Send audio buffer to Deepgram connection
         setTimeout(() => {

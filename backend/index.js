@@ -5,6 +5,7 @@ import dotenv from "dotenv";
 import { createClient, LiveTranscriptionEvents } from "@deepgram/sdk";
 import Groq from "groq-sdk";
 import { prompt1 } from "./utils/creditPrompt.js";
+import { type } from "os";
 
 dotenv.config();
 
@@ -83,10 +84,17 @@ wsServer.on("connection", (ws) => {
   let connection = null;
   let inactivityTimer = null;
   let llmcontext = "";
+  let audioChunkFr;
   ws.on("message", async (message) => {
     try {
-      console.log("Received message:", message);
-      const audioChunkFr = message;
+      console.log("Received message type :", typeof message);
+      if (Buffer.isBuffer(message)) {
+        audioChunkFr = message;
+        console.log("Received message:", message);
+      } else {
+        parsedMessage = JSON.parse(message);
+        console.log("Received message:", parsedMessage);
+      }
 
       // Clear the inactivity timer on each message
       if (inactivityTimer) {
@@ -107,6 +115,12 @@ wsServer.on("connection", (ws) => {
 
         connection.on(LiveTranscriptionEvents.Open, () => {
           console.log("Deepgram connection opened.");
+          ws.send(
+            JSON.stringify({
+              type: "dgConn",
+              deepgramConnection: true,
+            })
+          );
         });
 
         connection.on(LiveTranscriptionEvents.Transcript, async (data) => {
@@ -126,6 +140,7 @@ wsServer.on("connection", (ws) => {
             // Send TTS audio back to the client
             ws.send(
               JSON.stringify({
+                type: "transcript",
                 success: true,
                 base64Data: ttsBuffer,
                 ttsData: aiResponse?.ttsData,

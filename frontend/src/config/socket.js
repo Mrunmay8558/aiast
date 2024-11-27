@@ -17,7 +17,11 @@ const useWebSocket = (url) => {
       wsRef.current.onopen = () => {
         console.log("WebSocket connection opened");
         wsRef.current.send(
-          JSON.stringify({ type: "startRecording", connection: true })
+          JSON.stringify({
+            type: "startRecording",
+            connection: "true",
+            key: "json",
+          })
         );
       };
 
@@ -64,7 +68,11 @@ const useWebSocket = (url) => {
     // Send stop signal to the WebSocket server
     if (wsRef.current?.readyState === WebSocket.OPEN) {
       wsRef.current.send(
-        JSON.stringify({ type: "stopRecording", connection: false })
+        JSON.stringify({
+          type: "stopRecording",
+          connection: false,
+          key: "json",
+        })
       );
     }
 

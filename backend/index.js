@@ -83,12 +83,24 @@ wsServer.on("connection", (ws) => {
   let connection = null;
   let inactivityTimer = null;
   let llmcontext = "";
+  let tranlatedAudioConcat = "";
+  let parsedMessage;
+  let audioChunkFr;
+
   ws.on("message", async (message) => {
     try {
-      console.log("Received message:", message);
-      const audioChunkFr = message;
+      if (
+        typeof message.toString("utf-8") === "string" &&
+        message.toString("utf-8").includes("json")
+      ) {
+        console.log("Its is an json object");
+        const decodedMessage = message.toString("utf-8");
+        parsedMessage = JSON.parse(decodedMessage);
+      } else {
+        console.log("Its an audio Buffer");
+        audioChunkFr = message;
+      }
 
-      // Clear the inactivity timer on each message
       if (inactivityTimer) {
         clearTimeout(inactivityTimer);
         inactivityTimer = null;
@@ -97,12 +109,11 @@ wsServer.on("connection", (ws) => {
       if (audioChunkFr && !connection) {
         console.log("Starting Deepgram connection");
 
-        // Start the Deepgram live transcription connection
         connection = deepgram.listen.live({
           language: "en-US",
           model: "nova-2",
           smart_format: true,
-          endpointing: 1000, // Optional, silence duration before it ends the audio stream
+          endpointing: 1000,
         });
 
         connection.on(LiveTranscriptionEvents.Open, () => {
@@ -113,24 +124,27 @@ wsServer.on("connection", (ws) => {
           const transcript = data.channel.alternatives[0]?.transcript;
           if (transcript) {
             console.log("Transcript:", transcript);
-
-            const aiResponse = await generateAICompletion(
-              transcript,
-              llmcontext
-            );
-            llmcontext += aiResponse?.ttsData;
-            const ttsBuffer = await generateTTS(aiResponse?.ttsData);
-
-            if (!ttsBuffer) throw new Error("TTS Generation Failed.");
-
-            // Send TTS audio back to the client
-            ws.send(
-              JSON.stringify({
-                success: true,
-                base64Data: ttsBuffer,
-                ttsData: aiResponse?.ttsData,
-              })
-            );
+            tranlatedAudioConcat += transcript;
+            if (
+              parsedMessage?.type === "audioStop" &&
+              parsedMessage?.isStop === true
+            ) {
+              tranlatedAudioConcat = "";
+              const aiResponse = await generateAICompletion(
+                transcript,
+                llmcontext
+              );
+              llmcontext += aiResponse?.ttsData;
+              const ttsBuffer = await generateTTS(aiResponse?.ttsData);
+              if (!ttsBuffer) throw new Error("TTS Generation Failed.");
+              ws.send(
+                JSON.stringify({
+                  success: true,
+                  base64Data: ttsBuffer,
+                  ttsData: aiResponse?.ttsData,
+                })
+              );
+            }
           }
         });
 

@@ -47,9 +47,7 @@ export const createSilenceDetector = ({
 
         // Emit the audio chunk for processing on utterance detection
         if (onUtterance) {
-          const audioBuffer = new Blob(audioChunks, { type: "audio/webm" });
-          onUtterance(audioBuffer);
-          audioChunks = []; // Clear buffer
+          onUtterance(event.data);
         }
       }
     };
@@ -89,7 +87,7 @@ export const createSilenceDetector = ({
 
         if (mediaRecorderRef.current?.state !== "recording") {
           // Start recording with a 1500ms timeslice
-          mediaRecorderRef.current?.start(1500);
+          mediaRecorderRef.current?.start();
         }
       }
 

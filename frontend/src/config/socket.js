@@ -147,16 +147,19 @@ const useWebSocket = (url) => {
           );
         }
       },
-      onUtterance: (audioBuffer) => {
-        console.log("Utterance detected. Sending audio chunks to backend...");
+      onUtterance: (eventData) => {
+        console.log(
+          "Utterance detected. Sending audio chunks to backend...",
+          eventData
+        );
 
         pauseAudio(); // Pause playback when speaking starts
 
         if (wsRef.current?.readyState === WebSocket.OPEN) {
           // Ensure there is data to send
-          if (audioBuffer?.size > 0 && dgConnected !== null) {
-            wsRef.current.send(audioBuffer); // Send audio blob via WebSocket
-            console.log("Audio chunk sent to backend", audioBuffer);
+          if (eventData?.size > 0 && dgConnected !== null) {
+            wsRef.current.send(eventData); // Send audio blob via WebSocket
+            console.log("Audio chunk sent to backend");
           }
         }
       },

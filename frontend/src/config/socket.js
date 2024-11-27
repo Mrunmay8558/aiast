@@ -46,7 +46,7 @@ const useWebSocket = (url) => {
             }
           } else if (responseData?.type === "dgConn") {
             console.log("Deepgram connection opened");
-            dgConnected = true;
+            dgConnected = responseData?.deepgramConnection;
           }
 
           if (responseData.type === "error") {
@@ -142,34 +142,23 @@ const useWebSocket = (url) => {
       onSilence: () => {
         console.log("Silence detected. Sending stop flag to backend...");
         if (wsRef.current?.readyState === WebSocket.OPEN) {
-          payload = { type: "audioStop", audioStop: true };
-          wsRef.current.send(JSON.stringify(payload));
+          wsRef.current.send(
+            JSON.stringify({ type: "audioStop", audioStop: true, key: "json" })
+          );
         }
-        // Stop sending audio chunks
-        clearInterval(audioSendInterval);
-        audioSendInterval = null;
       },
       onUtterance: (audioBuffer) => {
         console.log("Utterance detected. Sending audio chunks to backend...");
+
         pauseAudio(); // Pause playback when speaking starts
 
-        if (!audioSendInterval) {
-          audioSendInterval = setInterval(() => {
-            if (wsRef.current?.readyState === WebSocket.OPEN) {
-              const audioBlob = new Blob(audioChunks.current, {
-                type: "audio/webm",
-              });
-              if (audioBlob.size > 0 && dgConnected !== null) {
-                wsRef.current.send(audioBlob);
-              }
-              console.log("Audio chunk sent to backend");
-              audioChunks.current = []; // Clear buffer after sending
-            }
-          }, 1500);
+        if (wsRef.current?.readyState === WebSocket.OPEN) {
+          // Ensure there is data to send
+          if (audioBuffer?.size > 0 && dgConnected !== null) {
+            wsRef.current.send(audioBuffer); // Send audio blob via WebSocket
+            console.log("Audio chunk sent to backend", audioBuffer);
+          }
         }
-
-        // Add audio buffer to chunks
-        audioChunks.current.push(audioBuffer);
       },
     });
 

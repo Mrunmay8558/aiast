@@ -39,15 +39,27 @@ export const createSilenceDetector = ({
     analyserRef.current = analyser;
     mediaRecorderRef.current = mediaRecorder;
 
+    // Handle each audio chunk
     mediaRecorder.ondataavailable = (event) => {
-      if (event.data.size > 0) audioChunks.push(event.data);
+      if (event.data.size > 0) {
+        const audioChunk = event.data;
+        audioChunks.push(audioChunk);
+
+        // Emit the audio chunk for processing on utterance detection
+        if (onUtterance) {
+          const audioBuffer = new Blob(audioChunks, { type: "audio/webm" });
+          onUtterance(audioBuffer);
+          audioChunks = []; // Clear buffer
+        }
+      }
     };
 
+    // Handle stop event
     mediaRecorder.onstop = () => {
       if (listening && onSilence) {
         const audioBuffer = new Blob(audioChunks, { type: "audio/webm" });
         onSilence(audioBuffer);
-        audioChunks = [];
+        audioChunks = []; // Clear buffer
       }
     };
   };
@@ -76,7 +88,8 @@ export const createSilenceDetector = ({
         lastSpeechTime.current = currentTime;
 
         if (mediaRecorderRef.current?.state !== "recording") {
-          mediaRecorderRef.current?.start();
+          // Start recording with a 1500ms timeslice
+          mediaRecorderRef.current?.start(1500);
         }
       }
 
@@ -85,7 +98,7 @@ export const createSilenceDetector = ({
       // Detect fumbling/utterance if gap between sounds is very short
       if (wordGap < wordGapThreshold) {
         utterance = true;
-        if (onUtterance) onUtterance();
+        if (onUtterance) onUtterance(); // Already handles audioChunk now
       }
 
       listening = false;

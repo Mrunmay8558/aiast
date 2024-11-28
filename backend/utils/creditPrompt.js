@@ -15,36 +15,49 @@ export const prompt1 = (llmContext) => {
   `;
 };
 
-export const prompt2 = `
-        Based on the user's input, populate the following details and return an object containing the specified keys.
-        IMPORTANT: **Respond in JSON format with the required details.**
-        {
-          ttsData: "The assistant's spoken response as a string.",
-          isFilled: **true if all required fields are filled based on the user's input, false if any required fields are missing, or null if no verification is required in the current step**,
-          formData: Fill in the details based on the user's input, retaining any previously provided data and updating with any new information.
-        }
-        
-        Here are the required fields in formData that need to be populated using the user's input:
-          {
-           firstName: "", // User's first name
-           lastName: "", // User's last name
-           dob: "", // User's date of birth
-           gender: "", // User's gender Based on the Gender Give just M or F
-           pan: "", // User's PAN (Permanent Account Number)
-           contactNumber: "", // User's contact number
-           email: "", // User's email address
-           endUse: "", // The intended end-use of the form or service (options: education, health, travel, other)
-           addressL1: "", // User's primary address line 1
-           addressL2: "", // User's secondary address line 2 
-           city: "", // User's city
-           state: "", // User's state
-           pincode: "" // User's postal code (PIN code)
-          }
-        
-        **Note:** The "endUse" field should be populated based on the user's input and whatever input that fits into these options such as education, health, travel, or other should be assign for ex: I want to travel a world so endUse should be travel.
-      
-        The output should accurately reflect the user's input, filling in the details where provided. Any fields not mentioned by the user should remain empty.
-      `;
+export const prompt2 = (formData) => {
+  return `
+Based on the user's input, populate the following details and return an object containing the specified keys.
+IMPORTANT: **Respond in JSON format with the required details.**
+
+{
+  ttsData: "The assistant's spoken response, limited to concise and relevant details.",
+  formData: Fill in the details based on the user's input. Retain existing values from \`${JSON.stringify(
+    formData
+  )}\` for fields that are already filled and only update with new information provided by the user.
+  next_state: Determine the next state based on the completeness of the formData. If all required fields are filled, set this to "human_insurance_offer". If any required fields are missing, set this to "human_insurance_feedback".
+}
+
+Here are the required fields in formData that need to be populated using the user's input:
+{
+   firstName: "${formData.firstName || ""}", // User's first name
+   lastName: "${formData.lastName || ""}", // User's last name
+   dob: "${formData.dob || ""}", // User's date of birth
+   gender: "${
+     formData.gender || ""
+   }", // User's gender (Based on input, assign "M" for male and "F" for female)
+   pan: "${formData.pan || ""}", // User's PAN (Permanent Account Number)
+   contactNumber: "${formData.contactNumber || ""}", // User's contact number
+   email: "${formData.email || ""}", // User's email address
+   endUse: "${
+     formData.endUse || ""
+   }", // The intended end-use of the form or service (options: education, health, travel, other)
+   addressL1: "${formData.addressL1 || ""}", // User's primary address line 1
+   addressL2: "${formData.addressL2 || ""}", // User's secondary address line 2 
+   city: "${formData.city || ""}", // User's city
+   state: "${formData.state || ""}", // User's state
+   pincode: "${formData.pincode || ""}" // User's postal code (PIN code)
+}
+
+**Note:**
+1. Keep ttsData concise and focused, ensuring a natural flow for chatbot interactions.
+2. Retain the existing formData values for fields that are already filled (e.g., "firstName" or "lastName").
+3. Populate the "endUse" field based on user input that matches options like education, health, travel, or other. For example: "I want to travel the world" should assign "travel" to endUse.
+4. If all fields in formData are filled, set next_state to "human_insurance_offer".
+5. If any fields are incomplete, set next_state to "human_insurance_feedback".
+6. The assistant's response must guide the user to provide missing information when needed.
+  `;
+};
 
 export const prompt3 = `
       Based on the user's form data, confirm whether all required fields have been filled out. If any required fields are missing, prompt the user to provide the missing information.

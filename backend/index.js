@@ -6,6 +6,7 @@ import { createClient, LiveTranscriptionEvents } from "@deepgram/sdk";
 import Groq from "groq-sdk";
 import { prompt1 } from "./utils/creditPrompt.js";
 import fs from "fs";
+
 dotenv.config();
 
 if (!process.env.DEEPGRAM_API_KEY || !process.env.GROQ_API_KEY) {
@@ -20,8 +21,14 @@ const wsServer = new WebSocketServer({ noServer: true });
 const deepgram = createClient(process.env.DEEPGRAM_API_KEY);
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
+// Function to calculate time taken by each step
+function calculateTimeTaken(startTime, endTime) {
+  return endTime - startTime;
+}
+
 // Generate AI Completion using Groq
 async function generateAICompletion(transcribedText, llmcontext) {
+  const startTime = Date.now();
   try {
     console.log("llmContext", llmcontext);
 
@@ -35,7 +42,11 @@ async function generateAICompletion(transcribedText, llmcontext) {
     });
 
     const completionText = response.choices[0]?.message?.content || "{}";
-    return JSON.parse(completionText);
+    const endTime = Date.now();
+    return {
+      result: JSON.parse(completionText),
+      timeTaken: calculateTimeTaken(startTime, endTime),
+    };
   } catch (error) {
     throw new Error("AI Completion Error: " + error.message);
   }
@@ -43,6 +54,7 @@ async function generateAICompletion(transcribedText, llmcontext) {
 
 // Generate TTS audio
 async function generateTTS(text) {
+  const startTime = Date.now();
   if (!text) {
     throw new Error("No text provided for TTS generation.");
   }
@@ -61,7 +73,11 @@ async function generateTTS(text) {
       chunks.push(chunk);
     }
     const buffer = Buffer.concat(chunks);
-    return buffer.toString("base64");
+    const endTime = Date.now();
+    return {
+      result: buffer.toString("base64"),
+      timeTaken: calculateTimeTaken(startTime, endTime),
+    };
   } catch (error) {
     throw new Error("TTS Generation Error: " + error.message);
   }
@@ -86,18 +102,14 @@ wsServer.on("connection", (ws) => {
   let tranlatedAudioConcat = "";
   let parsedMessage;
   let audioChunkFr;
+  let sttStartTime = null;
 
   ws.on("message", async (message) => {
     try {
-      if (
-        typeof message.toString("utf-8") === "string" &&
-        message.toString("utf-8").includes("json")
-      ) {
-        console.log("Its is an json object");
+      if (message.toString("utf-8").includes("json")) {
         const decodedMessage = message.toString("utf-8");
         parsedMessage = JSON.parse(decodedMessage);
       } else {
-        console.log("Its an audio Buffer");
         audioChunkFr = message;
       }
 
@@ -106,14 +118,12 @@ wsServer.on("connection", (ws) => {
         inactivityTimer = null;
       }
 
-      if (audioChunkFr || !connection) {
-        console.log("Starting Deepgram connection");
-
+      if (!connection) {
         connection = deepgram.listen.live({
           language: "en-US",
           model: "nova-2",
           smart_format: true,
-          endpointing: 10000,
+          endpointing: 1000,
         });
 
         connection.on(LiveTranscriptionEvents.Open, () => {
@@ -129,28 +139,37 @@ wsServer.on("connection", (ws) => {
         connection.on(LiveTranscriptionEvents.Transcript, async (data) => {
           const transcript = data.channel.alternatives[0]?.transcript;
           if (transcript) {
-            console.log("Transcript:", transcript);
             tranlatedAudioConcat += transcript;
-            console.log("tranlatedAudioConcat", tranlatedAudioConcat);
-            console.log(parsedMessage);
 
             if (
               parsedMessage?.type === "audioStop" &&
               parsedMessage?.audioStop === true
             ) {
+              const sttEndTime = Date.now();
+              const sttTimeTaken = calculateTimeTaken(sttStartTime, sttEndTime);
+
+              console.log(`STT completed in ${sttTimeTaken} ms`);
               tranlatedAudioConcat = "";
+
               const aiResponse = await generateAICompletion(
                 transcript,
                 llmcontext
               );
-              llmcontext += aiResponse?.ttsData;
-              const ttsBuffer = await generateTTS(aiResponse?.ttsData);
+              llmcontext += aiResponse.result?.ttsData;
+
+              const ttsBuffer = await generateTTS(aiResponse.result?.ttsData);
               if (!ttsBuffer) throw new Error("TTS Generation Failed.");
+
               ws.send(
                 JSON.stringify({
                   success: true,
-                  base64Data: ttsBuffer,
-                  ttsData: aiResponse?.ttsData,
+                  base64Data: ttsBuffer.result,
+                  ttsData: aiResponse.result?.ttsData,
+                  timeTaken: {
+                    sttGeneration: sttTimeTaken,
+                    aiCompletion: aiResponse.timeTaken,
+                    ttsGeneration: ttsBuffer.timeTaken,
+                  },
                 })
               );
             }
@@ -173,31 +192,19 @@ wsServer.on("connection", (ws) => {
       }
 
       if (audioChunkFr && connection) {
-        // Convert the audio chunk from Base64
+        if (!sttStartTime) sttStartTime = Date.now(); // Start timing on first audio chunk
         const audioBuffer = Buffer.from(audioChunkFr, "base64");
-        fs.writeFile("output_audio.wav", audioBuffer, (err) => {
-          if (err) {
-            console.error("Error saving the audio buffer:", err);
-          } else {
-            console.log("Audio buffer saved as output_audio.wav");
-          }
-        });
-
-        // Send audio buffer to Deepgram connection
-        setTimeout(() => {
-          connection?.send(audioBuffer);
-          console.log("Sent audio chunk to Deepgram.");
-        }, 1000);
+        connection?.send(audioBuffer);
+        console.log("Sent audio chunk to Deepgram.");
       }
 
-      // Set inactivity timer to close the connection after a grace period
       inactivityTimer = setTimeout(() => {
         console.log("Closing Deepgram connection due to inactivity.");
         if (connection) {
           connection.finish();
           connection = null;
         }
-      }, 10000); // 10 seconds of inactivity before closing
+      }, 10000);
     } catch (error) {
       console.error("Error handling message:", error);
       ws.send(
@@ -218,12 +225,10 @@ wsServer.on("connection", (ws) => {
   });
 });
 
-// WebSocket Error Handling
 function handleSocketError(err) {
   console.error("WebSocket error:", err);
 }
 
-// Start Server
 const PORT = process.env.PORT || 8001;
 server.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);

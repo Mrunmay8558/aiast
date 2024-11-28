@@ -1,18 +1,16 @@
-import { useContext, useEffect, useRef } from "react";
+import { useContext, useRef } from "react";
 import { TranscriptionContext } from "../context/context";
 import { createSilenceDetector } from "../components/Vad";
 import { str1, str2, str3 } from "../asset/audios/questions";
 
 const useWebSocket = (url) => {
-  const { setTranscriptionText } = useContext(TranscriptionContext);
+  const { setTranscriptionText, setTimeTaken } =
+    useContext(TranscriptionContext);
   const wsRef = useRef(null); // WebSocket instance
   const silenceDetectorRef = useRef(null); // Silence detector instance
   const audioRef = useRef(null); // Ref to manage audio playback
-  const audioChunks = useRef([]); // Buffer for collected audio chunks
   let audioSendInterval = null; // Interval ID for sending audio
   let dgConnected = null; // Deepgram connection status
-  let payload;
-
   const startRecording = () => {
     // Open WebSocket connection
     if (wsRef.current?.readyState !== WebSocket.OPEN) {
@@ -36,6 +34,9 @@ const useWebSocket = (url) => {
 
           if (responseData?.success) {
             const transcript = responseData.ttsData;
+
+            setTimeTaken(responseData?.timeTaken);
+
             console.log("Transcription received:", transcript);
             setTranscriptionText(transcript); // Update transcription state
 
@@ -141,6 +142,7 @@ const useWebSocket = (url) => {
       wordGapThreshold: 1000,
       onSilence: () => {
         console.log("Silence detected. Sending stop flag to backend...");
+
         if (wsRef.current?.readyState === WebSocket.OPEN) {
           wsRef.current.send(
             JSON.stringify({ type: "audioStop", audioStop: true, key: "json" })
@@ -173,6 +175,7 @@ const useWebSocket = (url) => {
   const stopSilenceDetector = () => {
     if (silenceDetectorRef.current) {
       silenceDetectorRef.current.stop();
+      pauseAudio(); // Pause playback when silence detection stops
       silenceDetectorRef.current = null;
       console.log("Silence detector stopped");
     }

@@ -3,3 +3,6 @@
 node_modules
 debug_audio.wav
 debug_audio.mp3
+
+
+output_audio.wav

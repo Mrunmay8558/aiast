@@ -25,8 +25,15 @@ const ButtonStyle = {
 
 function App() {
   const { startRecording, stopRecording } = useWebSocket("ws://localhost:8001");
-  const { ttsProvider, setTtsProvider, sttProvider, setSttProvider } =
-    useContext(TranscriptionContext);
+  const {
+    ttsProvider,
+    setTtsProvider,
+    sttProvider,
+    setSttProvider,
+    timeTaken,
+  } = useContext(TranscriptionContext);
+
+  console.log("timeTaken", timeTaken);
 
   return (
     <div className="App" style={PageStyle}>
@@ -62,6 +69,22 @@ function App() {
         <button style={ButtonStyle} onClick={stopRecording}>
           Stop Recording
         </button>
+      </div>
+
+      <div>
+        <h3>Time Taken</h3>
+        <p>
+          STT Genration (deepgram):{" "}
+          {(timeTaken?.sttGeneration / 1000).toFixed(2)} seconds
+        </p>
+        <p>
+          Response Genration (groq):{" "}
+          {(timeTaken?.aiCompletion / 1000).toFixed(2)} seconds
+        </p>
+        <p>
+          TTS Generation (deepgram):{" "}
+          {(timeTaken?.ttsGeneration / 1000).toFixed(2)} seconds
+        </p>
       </div>
     </div>
   );

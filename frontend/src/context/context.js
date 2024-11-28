@@ -4,6 +4,7 @@ const TranscriptionContext = createContext();
 
 const TranscriptionProvider = ({ children }) => {
   const [transcriptionText, setTranscriptionText] = useState("");
+  const [timeTaken, setTimeTaken] = useState({});
   const [ttsProvider, setTtsProvider] = useState(() => {
     return sessionStorage.getItem("ttsProvider") || "groq";
   });
@@ -35,6 +36,8 @@ const TranscriptionProvider = ({ children }) => {
         setTtsProvider,
         sttProvider,
         setSttProvider,
+        timeTaken,
+        setTimeTaken,
       }}
     >
       {children}

@@ -17,47 +17,113 @@ export const prompt1 = (llmContext) => {
 
 export const prompt2 = (formData) => {
   return `
-Based on the user's input, populate the following details and return an object containing the specified keys.
+You are a Financial Assistant created by CliniQ360. Your interface with users will be voice. Your task is to help the user collect details required to submit the form.
+
+
 IMPORTANT: **Respond in JSON format with the required details.**
 
 {
   ttsData: "The assistant's spoken response, limited to concise and relevant details.",
-  formData: Fill in the details based on the user's input. Retain existing values from \`${JSON.stringify(
+  formData: Gradually populate and update the details based on the user's input. Retain existing values for all fields already present in \`${JSON.stringify(
     formData
-  )}\` for fields that are already filled and only update with new information provided by the user.
+  )}\`.
   next_state: Determine the next state based on the completeness of the formData. If all required fields are filled, set this to "human_insurance_offer". If any required fields are missing, set this to "human_insurance_feedback".
 }
 
-Here are the required fields in formData that need to be populated using the user's input:
+Here are the required fields in formData that need to be filled one by one based on the user's input:
 {
-   firstName: "${formData.firstName || ""}", // User's first name
-   lastName: "${formData.lastName || ""}", // User's last name
-   dob: "${formData.dob || ""}", // User's date of birth
-   gender: "${
-     formData.gender || ""
-   }", // User's gender (Based on input, assign "M" for male and "F" for female)
-   pan: "${formData.pan || ""}", // User's PAN (Permanent Account Number)
-   contactNumber: "${formData.contactNumber || ""}", // User's contact number
-   email: "${formData.email || ""}", // User's email address
-   endUse: "${
-     formData.endUse || ""
-   }", // The intended end-use of the form or service (options: education, health, travel, other)
-   addressL1: "${formData.addressL1 || ""}", // User's primary address line 1
-   addressL2: "${formData.addressL2 || ""}", // User's secondary address line 2 
-   city: "${formData.city || ""}", // User's city
-   state: "${formData.state || ""}", // User's state
-   pincode: "${formData.pincode || ""}" // User's postal code (PIN code)
+   firstName: "User's first name",
+   lastName: "User's last name",
+   dob: "User's date of birth format - dd/mm/yyyy",
+   gender: "User's gender (Based on input, assign 'M' for male and 'F' for female)",
+   pan: "User's PAN (Permanent Account Number)",
+   contactNumber: "User's contact number",
+   email: "User's email address",
+   endUse: "The intended end-use of the form or service (options: education, health, travel, other)",
+   addressL1: "User's primary address line 1",
+   addressL2: "User's secondary address line 2",
+   city: "User's city",
+   state: "User's state",
+   pincode: "User's postal code (PIN code)"
 }
 
-**Note:**
-1. Keep ttsData concise and focused, ensuring a natural flow for chatbot interactions.
-2. Retain the existing formData values for fields that are already filled (e.g., "firstName" or "lastName").
-3. Populate the "endUse" field based on user input that matches options like education, health, travel, or other. For example: "I want to travel the world" should assign "travel" to endUse.
-4. If all fields in formData are filled, set next_state to "human_insurance_offer".
-5. If any fields are incomplete, set next_state to "human_insurance_feedback".
-6. The assistant's response must guide the user to provide missing information when needed.
+---
+
+**Additional Instructions:**
+
+You are a helpful assistant tasked with collecting customer information in order to complete a loan application form.  
+The information you need to collect includes: ${Object.keys(formData).join(
+    ", "
+  )}.
+
+1. **Initial Check:** Analyze the already collected information provided in \`${JSON.stringify(
+    formData
+  )}\` and identify missing values.  
+   - If no information is available, start by asking the first question.
+
+2. **Step-by-Step Collection:**  
+   - Ask only for the missing information.  
+   - Map the user's response to the relevant key and update \`${JSON.stringify(
+     formData
+   )}\`.  
+   - Avoid repeating questions for details that have already been collected.  
+
+3. **Final Validation:**  
+   - After going through the list, confirm that all details have been collected.  
+   - If all required information is available, reply only: **"ALL DATA COLLECTED"** and ask the user if you can submit the details.  
+   - If the user requests submission, call the relevant function provided in your tools.  
+   - If there are still missing pieces of information, generate a question targeting those fields only.
+
+**Now, proceed step-by-step and analyze \`${JSON.stringify(formData)}\`.**  
   `;
 };
+
+// export const prompt2 = (formData) => {
+//   console.log("formData", formData);
+
+//   return `
+// Based on the user's input, populate the following details one by one and return an object containing the specified keys. Do not erase any previously provided values in \`${JSON.stringify(
+//     formData
+//   )}\`. Update only the new information provided by the user.
+
+// IMPORTANT: **Respond in JSON format with the required details.**
+
+// {
+//   ttsData: "The assistant's spoken response, limited to concise and relevant details.",
+//   formData: Gradually populate and update the details based on the user's input. Retain existing values for all fields already present in \`${JSON.stringify(
+//     formData
+//   )}\`.
+//   next_state: Determine the next state based on the completeness of the formData. If all required fields are filled, set this to "human_insurance_offer". If any required fields are missing, set this to "human_insurance_feedback".
+// }
+
+// Here are the required fields in formData that need to be filled one by one based on the user's input:
+// {
+//    firstName: "User's first name",
+//    lastName: "User's last name",
+//    dob: "User's date of birth format - dd/mm/yyyy",
+//    gender: "User's gender (Based on input, assign 'M' for male and 'F' for female)",
+//    pan: "User's PAN (Permanent Account Number)",
+//    contactNumber: "User's contact number",
+//    email: "User's email address",
+//    endUse: "The intended end-use of the form or service (options: education, health, travel, other)",
+//    addressL1: "User's primary address line 1",
+//    addressL2: "User's secondary address line 2",
+//    city: "User's city",
+//    state: "User's state",
+//    pincode: "User's postal code (PIN code)"
+// }
+
+// **Rules:**
+// 1. Ask for one field at a time based on the missing fields in the formData object.
+// 2. Retain all previously entered values. Do not overwrite fields that already have values in \`${JSON.stringify(
+//     formData
+//   )}\`.
+// 3. For fields like "endUse," infer the value based on user input. For example: "I want to travel the world" should assign "travel" to endUse.
+// 4. Set \`next_state\` to "human_insurance_offer" only if all fields are complete. Otherwise, set it to "human_insurance_feedback".
+// 5. Keep ttsData concise and conversational to guide the user step by step.
+// 6. Continue collecting and updating formData until all fields are complete.
+//   `;
+// };
 
 export const prompt3 = `
       Based on the user's form data, confirm whether all required fields have been filled out. If any required fields are missing, prompt the user to provide the missing information.

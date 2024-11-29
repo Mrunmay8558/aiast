@@ -21,13 +21,15 @@ const deepgram = createClient(process.env.DEEPGRAM_API_KEY);
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
 async function generateAICompletion(transcribedText, formData) {
+  console.log(formData);
+
   console.log("Entered into AI Generation");
 
   try {
     const response = await groq.chat.completions.create({
       messages: [
         { role: "user", content: transcribedText },
-        { role: "system", content: prompt2("Hello") },
+        { role: "system", content: prompt2(formData) },
       ],
       model: "llama3-70b-8192",
       response_format: { type: "json_object" },
@@ -86,7 +88,6 @@ server.on("upgrade", (req, socket, head) => {
 wsServer.on("connection", (ws) => {
   let parsedMessage;
   let translatedConcat = "";
-  let formData;
   console.log("Client connected");
 
   ws.on("error", handleSocketError);
@@ -99,6 +100,7 @@ wsServer.on("connection", (ws) => {
   });
 
   connection.on(LiveTranscriptionEvents.Open, () => {
+    let formData = {};
     console.log("Deepgram live transcription connection opened");
 
     // Relay transcription results to the client
@@ -111,7 +113,8 @@ wsServer.on("connection", (ws) => {
           translatedConcat,
           formData
         );
-        formData = parsedMessage?.formData;
+
+        formData = parsedResponse?.formData;
 
         translatedConcat = "";
         parsedMessage = {};

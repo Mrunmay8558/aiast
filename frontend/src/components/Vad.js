@@ -1,6 +1,6 @@
 export const createSilenceDetector = ({
   noiseThreshold = 10,
-  silenceDurationThreshold = 3000,
+  silenceDurationThreshold = 5000,
   onSilence,
   onSound,
 }) => {
